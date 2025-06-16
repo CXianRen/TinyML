@@ -43,7 +43,7 @@ def test_MySelfAT():
         output_t, _ = attn_t(input_tensor)
     output_data = output_t.numpy()
 
-    out = attn.forward(input_data)  # [B, S, E]
+    out, _, _ = attn.forward(input_data)  # [B, S, E]
     check_output(out, output_data, "Final Output")
 
 def testLayerNorm():
