@@ -8,7 +8,6 @@ class MModule():
     def __call__(self, *args, **kwds):
         return self.forward(*args, **kwds)
 
-
 class MLinear(MModule):
     def __init__(self, in_features, out_features, bias=True):
         self.in_features = in_features
@@ -137,11 +136,11 @@ class GPTNeoAttention(MModule):
         self.layer_id = layer_id
         self.attention_type = ""
         
-        self.self_attention = MySelfAT()
+        self.attention = MySelfAT()
 
     def forward(self, hidden_states):
         # hidden_states shape: [B, S, E]
-        attention_output = self.self_attention(hidden_states)
+        attention_output = self.attention(hidden_states)
         return attention_output
     
 class GPTNeoMLP(MModule):
@@ -181,18 +180,61 @@ class GPTNeoBlock(MModule):
         return hidden_states
     
 class GPTNeoModel(MModule):
-    def __init__(self, num_layers, embed_size):
+    def __init__(self, num_layers, embed_size = 768):
         self.num_layers = num_layers
         self.embed_size = embed_size
         vocab_size = 50257  # Common vocabulary size for GPT models
-        self.wte = np.random.rand(vocab_size, embed_size)  # Word token embeddings
-        self.wpe = np.random.rand(1024, embed_size)  # Position embeddings
-        
+        self.wte = MEmbed(vocab_size, embed_size)
+        self.wpe = MEmbed(2048, embed_size)  # Position embeddings, assuming max position embeddings of 2048
         
         self.layers = [GPTNeoBlock(embed_size, layer_id=i) for i in range(num_layers)]
         self.ln_f = MLayerNorm(embed_size)
+        
+        self.lm_head = MLinear(embed_size, vocab_size, bias=False)  # Language model head for output logits
     
     def forward(self, hidden_states):
         input_embeddings = self.wte(hidden_states) # Convert token IDs to embeddings
-        position_ids = self.wpe(inpu)
+        
+        sequence_length = input_embeddings.shape[1]
+        position_ids = np.arange(sequence_length).reshape(1, -1)
+        position_embeddings = self.wpe(position_ids)  # Get position embeddings
+        hidden_states = input_embeddings + position_embeddings
+        for layer in self.layers:
+            hidden_states = layer(hidden_states)
+        
+        hidden_states = self.ln_f(hidden_states)
+        # Get logits for the next token prediction
+        output_logits = self.lm_head(hidden_states) 
+        return output_logits  # Shape: [B, S, vocab_size]
 
+    def load(self, path="./model_state_dict"):
+        # init wte 
+        self.wte.weight = np.load(f"{path}/transformer/wte/weight/parameters.npy")
+        # init wpe
+        self.wpe.weight = np.load(f"{path}/transformer/wpe/weight/parameters.npy")
+        # init layers
+        for i, layer in enumerate(self.layers):
+            layer.attention.attention.k_proj.weight = np.load(f"{path}/transformer/h/{i}/attn/attention/k_proj/weight/parameters.npy")
+            layer.attention.attention.v_proj.weight = np.load(f"{path}/transformer/h/{i}/attn/attention/v_proj/weight/parameters.npy")
+            layer.attention.attention.q_proj.weight = np.load(f"{path}/transformer/h/{i}/attn/attention/q_proj/weight/parameters.npy")
+            layer.attention.attention.out_proj.weight = np.load(f"{path}/transformer/h/{i}/attn/attention/out_proj/weight/parameters.npy")
+            layer.attention.attention.out_proj.bias = np.load(f"{path}/transformer/h/{i}/attn/attention/out_proj/bias/parameters.npy")
+            
+            layer.mlp.c_fc.weight = np.load(f"{path}/transformer/h/{i}/mlp/c_fc/weight/parameters.npy")
+            layer.mlp.c_fc.bias = np.load(f"{path}/transformer/h/{i}/mlp/c_fc/bias/parameters.npy")
+            layer.mlp.c_proj.weight = np.load(f"{path}/transformer/h/{i}/mlp/c_proj/weight/parameters.npy")
+            layer.mlp.c_proj.bias = np.load(f"{path}/transformer/h/{i}/mlp/c_proj/bias/parameters.npy")
+            # init ln_1
+            layer.ln_1.gamma = np.load(f"{path}/transformer/h/{i}/ln_1/weight/parameters.npy")
+            layer.ln_1.beta = np.load(f"{path}/transformer/h/{i}/ln_1/bias/parameters.npy")       
+            # init ln_2
+            layer.ln_2.gamma = np.load(f"{path}/transformer/h/{i}/ln_2/weight/parameters.npy")
+            layer.ln_2.beta = np.load(f"{path}/transformer/h/{i}/ln_2/bias/parameters.npy")
+            
+        # init ln_f
+        self.ln_f.gamma = np.load(f"{path}/transformer/ln_f/weight/parameters.npy")
+        self.ln_f.beta = np.load(f"{path}/transformer/ln_f/bias/parameters.npy")
+        
+        # init lm_head
+        self.lm_head.weight = np.load(f"{path}/lm_head/weight/parameters.npy")
+        
