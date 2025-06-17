@@ -49,3 +49,15 @@ attn_output = self.out_proj(attn_output)
 [B, N, 768]
 
 attn_output = self.resid_dropout(attn_output)
+
+
+#  Byte-Pair Encoding（BPE）
+
+given a sentence: "There is a cat."
+
+## First split it by word then split it by char
+```
+There -> ['T', 'h', 'e', 'r', 'e', ...]
+```
+
+

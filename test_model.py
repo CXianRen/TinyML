@@ -3,6 +3,10 @@ from myAT import GPTNeoModel
 import numpy as np
 
 tokenizer = AutoTokenizer.from_pretrained("roneneldan/TinyStories-33M")
+print("Tokenizer loaded.")
+# the type of tokenizer
+print("Tokenizer type:", type(tokenizer))
+
 
 myModel = GPTNeoModel(num_layers=4)
 myModel.load()
