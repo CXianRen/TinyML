@@ -1,4 +1,4 @@
-from tinyML.MNN import MSelfAT, MLayerNorm, GELUActivation, MEmbed
+from MNN import MSelfAT, MLayerNorm, GELUActivation, MEmbed
 import numpy as np
 import torch
 from transformers.activations import NewGELUActivation

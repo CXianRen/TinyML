@@ -1,20 +1,23 @@
-from transformers import AutoTokenizer
-from tinyML.MNN import GPTNeoModel
+from tokenizer.miniTokenizer import MiniTokenizer
+from GPTNeo import GPTNeoModel
 import numpy as np
 
-tokenizer = AutoTokenizer.from_pretrained("roneneldan/TinyStories-33M")
+tokenizer = MiniTokenizer(
+    vocab_file="tokenizer/vocab.json",
+    merge_file="tokenizer/merges.txt"
+)
 print("Tokenizer loaded.")
-# the type of tokenizer
-print("Tokenizer type:", type(tokenizer))
 
 
 myModel = GPTNeoModel(num_layers=4)
-myModel.load()
+myModel.load("../model_state_dict")  # load the model state dict
+
+print("Model loaded.")
 
 def greedy_generate_no_cache(model, tokenizer, input_ids, max_new_tokens=100):
     # numpy version
     generated = input_ids
-    cache = None
+    cache = {}
     for idx in range(max_new_tokens):
         # input and output are numpy arrays
         if cache is None:
@@ -35,15 +38,16 @@ def greedy_generate_no_cache(model, tokenizer, input_ids, max_new_tokens=100):
         next_token = np.argmax(next_token_logits, axis=-1).reshape(-1, 1)
         generated = np.concatenate((generated, next_token), axis=-1)
         
-        if next_token == tokenizer.eos_token_id:
+        if next_token == tokenizer.eos_token:
             break
         # print("output:", tokenizer.decode(next_token.item(), skip_special_tokens=True))
         # print("cache size:", cache[0][0].shape)
-        print(tokenizer.decode(next_token.item(), skip_special_tokens=True), end='', flush=True)
+        print(tokenizer.decode([next_token.item()]), end=' ', flush=True)
     print() 
     return generated
 
-input_ids = tokenizer("Once upon a time,", return_tensors="np").input_ids  # use numpy
+input_ids = tokenizer.encode("Once upon a time,")
+input_ids = np.array(input_ids).reshape(1, -1)  # reshape to 2D array
 input_ids = input_ids.astype(np.int64)  # ensure the type is int64 for numpy
 
 import time
