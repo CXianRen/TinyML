@@ -29,7 +29,7 @@ class MLinear(MModule):
         # x shape: [B, S, E]
         return np.dot(x, self.weight.T)
 
-class MySelfAT(MModule):
+class MSelfAT(MModule):
     def __init__(self):
         self.embed_size = 768
         self.num_attention_heads = 16
@@ -167,7 +167,7 @@ class GPTNeoAttention(MModule):
         self.layer_id = layer_id
         self.attention_type = ""
         
-        self.attention = MySelfAT()
+        self.attention = MSelfAT()
 
     def forward(self, hidden_states, k_h=None, v_h=None):
         # hidden_states shape: [B, S, E]
@@ -258,6 +258,7 @@ class GPTNeoModel(MModule):
     def load(self, path="./model_state_dict"):
         # init wte 
         self.wte.weight = np.load(f"{path}/transformer/wte/weight/parameters.npy")
+        print("model fp:",self.wte.weight.dtype)
         # init wpe
         self.wpe.weight = np.load(f"{path}/transformer/wpe/weight/parameters.npy")
         # init layers

@@ -1,4 +1,4 @@
-from myAT import MySelfAT, MLayerNorm, GELUActivation, MEmbed
+from tinyML.MNN import MSelfAT, MLayerNorm, GELUActivation, MEmbed
 import numpy as np
 import torch
 from transformers.activations import NewGELUActivation
@@ -13,8 +13,8 @@ def check_output(output, output_data, name):
         print("{} output does not match expected output.".format(name))
         
            
-def test_MySelfAT():
-    attn = MySelfAT()
+def test_MSelfAT():
+    attn = MSelfAT()
     attn.k_proj.weight = np.load('model_state_dict/transformer/h/1/attn/attention/k_proj/weight/parameters.npy')
     attn.v_proj.weight = np.load('model_state_dict/transformer/h/1/attn/attention/v_proj/weight/parameters.npy')
     attn.q_proj.weight = np.load('model_state_dict/transformer/h/1/attn/attention/q_proj/weight/parameters.npy')
@@ -78,7 +78,6 @@ def testGELUActivation():
     output = gelu.forward(input_tensor.numpy())
     check_output(output, output_t.numpy(), "GELU Activation Output")
 
-
 def testEmbedding():
     embed = MEmbed(vocab_size=50257, embed_dim=768)
     embed.weight = np.load('model_state_dict/transformer/wte/weight/parameters.npy')
@@ -95,7 +94,22 @@ def testEmbedding():
     out = embed.forward(input_ids)  # [B, S, E]
     check_output(out, output_data, "Embedding Output")
 
-test_MySelfAT()
+def test_MSelfAT_with_hsitory():
+    attn = MSelfAT()
+    input_data = np.random.randn(1, 200, 768).astype(np.float32)  # [B, S, E]
+    output_data, _, _ = attn.forward(input_data)  # [B, S, E]
+    
+    
+    input_data_0_9 = input_data[:, :-2, :]
+    _, k_h, v_h = attn.forward(input_data_0_9)  # [B, S, E]
+    input_data_9_10 = input_data[:, -1:, :]
+    output_data_9_10, k_h, v_h = attn.forward(input_data_9_10, k_h, v_h)  # [B, S, E]
+    print("output_data shape:", output_data.shape)
+    print("output_data_9_10 shape:", output_data_9_10.shape)
+    check_output(output_data[:, -1:, :], output_data_9_10, "MSelfAT with history")
+    
+test_MSelfAT()
 testLayerNorm()
 testGELUActivation()
 testEmbedding()
+test_MSelfAT_with_hsitory()

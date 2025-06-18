@@ -1,10 +1,14 @@
 import os
 from transformers import AutoTokenizer, AutoModelForCausalLM
-from myAT import GPTNeoModel
+from tinyML.MNN import GPTNeoModel
 import numpy as np
 
 tokenizer = AutoTokenizer.from_pretrained("roneneldan/TinyStories-33M")
 model = AutoModelForCausalLM.from_pretrained("roneneldan/TinyStories-33M")
+
+dtype = next(model.parameters()).dtype
+print("Model dtype:", dtype)
+print("Model device:", model.device)
 
 # print the model structure
 print(model, file=open("model_structure.txt", "w"))
@@ -31,27 +35,27 @@ print(model.config, file=open("model_config.txt", "w"))
 
 import torch
 
-# def greedy_generate(model, tokenizer, input_ids, max_new_tokens=100):
-#     model.eval()
-#     generated = input_ids
-#     past_key_values = None
+def greedy_generate(model, tokenizer, input_ids, max_new_tokens=100):
+    model.eval()
+    generated = input_ids
+    past_key_values = None
 
-#     with torch.no_grad():
-#         for idx in range(max_new_tokens):
-#             # 只输入最新生成的 token，和缓存
-#             outputs = model(input_ids=generated[:, -1:], past_key_values=past_key_values)
-#             next_token_logits = outputs.logits[:, -1, :]
-#             past_key_values = outputs.past_key_values
+    with torch.no_grad():
+        for idx in range(max_new_tokens):
+            # 只输入最新生成的 token，和缓存
+            outputs = model(input_ids=generated[:, -1:], past_key_values=past_key_values)
+            next_token_logits = outputs.logits[:, -1, :]
+            past_key_values = outputs.past_key_values
 
-#             next_token = torch.argmax(next_token_logits, dim=-1).unsqueeze(-1)
-#             generated = torch.cat((generated, next_token), dim=-1)
+            next_token = torch.argmax(next_token_logits, dim=-1).unsqueeze(-1)
+            generated = torch.cat((generated, next_token), dim=-1)
 
-#             if next_token.item() == tokenizer.eos_token_id:
-#                 break
-#             # decode the new token and print it
-#             print(tokenizer.decode(next_token.item(), skip_special_tokens=True), end='', flush=True)
-#             # print(idx, end=' ', flush=True)
-#     return generated
+            if next_token.item() == tokenizer.eos_token_id:
+                break
+            # decode the new token and print it
+            print(tokenizer.decode(next_token.item(), skip_special_tokens=True), end='', flush=True)
+            # print(idx, end=' ', flush=True)
+    return generated
 
 # def greedy_generate_no_cache(model, tokenizer, input_ids, max_new_tokens=100):
 #     model.eval()
@@ -73,36 +77,36 @@ import torch
 #     print() 
 #     return generated
 
-myModel = GPTNeoModel(num_layers=4)
-myModel.load()
+# myModel = GPTNeoModel(num_layers=4)
+# myModel.load()
 
-def greedy_generate_no_cache(model, tokenizer, input_ids, max_new_tokens=100):
-    # numpy version
-    generated = input_ids
+# def greedy_generate_no_cache(model, tokenizer, input_ids, max_new_tokens=100):
+#     # numpy version
+#     generated = input_ids
     
-    with torch.no_grad():
-        for idx in range(max_new_tokens):
-            # 每次输入整个序列，不使用 past_key_values
-            # input and output are numpy arrays
-            outputs = model(generated)
-            next_token_logits = outputs[:, -1, :]  # 取最后一个 token 的 logits
+#     with torch.no_grad():
+#         for idx in range(max_new_tokens):
+#             # 每次输入整个序列，不使用 past_key_values
+#             # input and output are numpy arrays
+#             outputs = model(generated)
+#             next_token_logits = outputs[:, -1, :]  # 取最后一个 token 的 logits
 
-            # next_token = torch.argmax(next_token_logits, dim=-1).unsqueeze(-1)
-            # generated = torch.cat((generated, next_token), dim=-1)
-            next_token = np.argmax(next_token_logits, axis=-1).reshape(-1, 1)
-            generated = np.concatenate((generated, next_token), axis=-1)
+#             # next_token = torch.argmax(next_token_logits, dim=-1).unsqueeze(-1)
+#             # generated = torch.cat((generated, next_token), dim=-1)
+#             next_token = np.argmax(next_token_logits, axis=-1).reshape(-1, 1)
+#             generated = np.concatenate((generated, next_token), axis=-1)
             
-            if next_token == tokenizer.eos_token_id:
-                break
+#             if next_token == tokenizer.eos_token_id:
+#                 break
 
-            print(tokenizer.decode(next_token.item(), skip_special_tokens=True), end='', flush=True)
-    print() 
-    return generated
+#             print(tokenizer.decode(next_token.item(), skip_special_tokens=True), end='', flush=True)
+#     print() 
+#     return generated
 
-input_ids = tokenizer("Once upon a time", return_tensors="np").input_ids  # use numpy
-input_ids = input_ids.astype(np.int64)  # ensure the type is int64 for numpy
-generated_ids = greedy_generate_no_cache(myModel, tokenizer, input_ids, max_new_tokens=20)
+# input_ids = tokenizer("Once upon a time", return_tensors="np").input_ids  # use numpy
+# input_ids = input_ids.astype(np.int64)  # ensure the type is int64 for numpy
+# generated_ids = greedy_generate_no_cache(myModel, tokenizer, input_ids, max_new_tokens=200)
 
-# input_ids = tokenizer("Once upon a time", return_tensors="pt").input_ids.to(model.device)
-# generated_ids = greedy_generate_no_cache(model, tokenizer, input_ids, max_new_tokens=20)
-# print(tokenizer.decode(generated_ids[0], skip_special_tokens=True))
+input_ids = tokenizer("Once upon a time", return_tensors="pt").input_ids.to(model.device)
+generated_ids = greedy_generate(model, tokenizer, input_ids, max_new_tokens=200)
+print(tokenizer.decode(generated_ids[0], skip_special_tokens=True))
