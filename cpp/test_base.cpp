@@ -7,6 +7,8 @@
 using namespace MNN;
 using namespace std;
 
+#define epsilon 1e-6
+
 void testMat2D(){
     cout << "Mat1:" << std::endl;
     Mat2D<float> mat(2, 2);
@@ -137,15 +139,53 @@ void testMEmbed() {
                           << " != " 
                           << expected[i][j] 
                           << std::endl;
+                break; // Break on first error
             }
         }
     }
     std::cout << "MEmbed test completed." << std::endl;
 }
 
+void testSoftmax() {
+    Mat2D<float> input(3, 3);
+    
+    /*
+        input = [
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9]
+        ]
+    */
+    for (int i = 0; i < 9; ++i) {
+        input.m_data[i] = i + 1.f; // Initialize input
+    }
+
+    float softmax_output[9]= {
+        0.09003057f, 0.24472847f, 0.66524096f,
+        0.09003057f, 0.24472847f, 0.66524096f,
+        0.09003057f, 0.24472847f, 0.66524096f
+    };
+
+    Mat2D<float> output(3, 3);
+    softmax(input, output);
+    // Check output
+    for (int i = 0; i < 9; ++i) {
+        if (std::fabs(output.m_data[i] - softmax_output[i]) > epsilon) {
+            std::cout << "Error at output index "
+                      << i << ": "
+                      << output.m_data[i]
+                      << " != "
+                      << softmax_output[i] << std::endl;
+            break; // Break on first error
+        }
+    }
+    std::cout << "Softmax test completed." << std::endl;
+}
+
 int main(int argc, char** argv) {
     testMat2D();
     testMLinear();
     testMEmbed();
+    testSoftmax();
     return 0;
 }

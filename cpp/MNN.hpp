@@ -5,6 +5,7 @@
 #include <vector>
 #include <memory>
 #include <stdexcept>
+#include <cmath>
 
 namespace MNN {
 
@@ -115,7 +116,7 @@ namespace MNN {
                 return *this;
             }
 
-        private:
+        // private:
             int m_rows;
             int m_cols;
             T* m_data; // Pointer to the data array
@@ -145,7 +146,7 @@ namespace MNN {
                 return;
             }
 
-        private:
+        // private:
             int in_features_;
             int out_features_;
             bool use_bias_;
@@ -176,11 +177,43 @@ namespace MNN {
                 }
             }
 
-        private:
+        // private:
             int vocab_size_;
             int embed_dim_;
             Mat2D<T> embeddings_; // Embedding matrix
     };
+
+    template<typename T>
+    void softmax(Mat2D<T>& input, Mat2D<T>& output) {
+        // only works for 2D matrix, and 
+        // just for the last dimension
+ 
+        for (int i = 0; i < input.m_rows; i++){
+            // Find max for numerical stability      
+            // out= exp(x - max(x))
+            // out /= sum(out)
+
+            T max_val = input.get(i, 0);
+            for (int j = 1; j < input.m_cols; j++) {
+                if (input.get(i, j) > max_val) {
+                    max_val = input.get(i, j);
+                }
+            }
+            
+            for (int j = 0; j < input.m_cols; j++) {
+                output.set(i, j, std::exp(input.get(i, j) - max_val));
+            }
+
+            T sum = 0;
+            for (int j = 0; j < input.m_cols; j++) {
+                sum += output.get(i, j);
+            }
+            // Normalize
+            for (int j = 0; j < input.m_cols; j++) {
+                output.set(i, j, output.get(i, j) / sum);
+            }
+        }
+    }
 }
 
 
