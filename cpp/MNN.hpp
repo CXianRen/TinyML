@@ -2,7 +2,7 @@
 #define __MNN_HPP__
 
 #include <string>
-#include <array>
+#include <vector>
 #include <memory>
 #include <stdexcept>
 
@@ -152,6 +152,34 @@ namespace MNN {
 
             Mat2D<T> weight_; // Weight matrix
             Mat2D<T> bias_; // Bias vector, if used
+    };
+
+    template<typename T>
+    class MEmbed {
+        public:
+            MEmbed(int vocab_size, int embed_dim) 
+                : vocab_size_(vocab_size), embed_dim_(embed_dim) {
+                embeddings_ = Mat2D<T>(vocab_size, embed_dim);
+            }
+
+            ~MEmbed() = default;
+
+            void forward(std::vector<int> idxs, Mat2D<T>& output) {
+                for (size_t i = 0; i < idxs.size(); ++i) {
+                    if (idxs[i] < 0 || idxs[i] >= vocab_size_) {
+                        throw std::out_of_range("Index out of bounds for embedding.");
+                    }
+                    for (int j = 0; j < embed_dim_; ++j) {
+                        int idx = idxs[i];
+                        output.set(i, j, embeddings_.get(idx, j));
+                    }
+                }
+            }
+
+        private:
+            int vocab_size_;
+            int embed_dim_;
+            Mat2D<T> embeddings_; // Embedding matrix
     };
 }
 

@@ -110,8 +110,42 @@ void testMLinear() {
     std::cout << "MLinear test completed." << std::endl;
 }
 
+void testMEmbed() {
+    MEmbed<float> embed(4, 3);
+    for (int i = 0; i < 12; ++i) {
+        embed.embeddings_.m_data[i] = i + 1.f;
+        // Initialize embeddings
+    }
+
+    // Input indices
+    std::vector<int> indices = {0, 2, 1};
+    Mat2D<float> output(3, 3); // Output matrix
+    embed.forward(indices, output);
+
+    // Check output
+    float expected[3][3] = {
+        {1.f, 2.f, 3.f}, // Embedding for index 0
+        {7.f, 8.f, 9.f}, // Embedding for index 2
+        {4.f, 5.f, 6.f}  // Embedding for index 1
+    };  
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            if (output.get(i, j) != expected[i][j]) {
+                std::cout << "Error at output (" 
+                          << i << ", " << j << "): "
+                          << output.get(i, j) 
+                          << " != " 
+                          << expected[i][j] 
+                          << std::endl;
+            }
+        }
+    }
+    std::cout << "MEmbed test completed." << std::endl;
+}
+
 int main(int argc, char** argv) {
     testMat2D();
     testMLinear();
+    testMEmbed();
     return 0;
 }
