@@ -113,15 +113,18 @@ class MSelfAT(MModule):
             value_states = np.concatenate((v_h, value_states), axis=2)
         
         # (QK^T)V 
-        attention_output = self._attn(query_states, key_states, value_states)  # [B, HN, S, HD]
+        attention_output = self._attn(
+            query_states, key_states, value_states)  # [B, HN, S, HD]
         
         # Combine heads back to the original shape
         # [B, HN, S, HD] -> [B, S, HN, HD]
         # [B, HN, 1, HD] -> [B, 1, HN, HD]
-        attention_output = np.transpose(attention_output, (0, 2, 1, 3)).copy()
+        attention_output = np.transpose(
+            attention_output, (0, 2, 1, 3)).copy()
         # Reshape to [B, S, E]
         # [B, 1, HN, HD] -> [B, 1, E]
-        attention_output = attention_output.reshape(batch_size, seq_length, self.embed_size)
+        attention_output = attention_output.reshape(
+            batch_size, seq_length, self.embed_size)
         
         # out = np.dot(attention_output, self.out_proj.T) + self.out_bias
         out = self.out_proj(attention_output)
@@ -138,8 +141,11 @@ class MLayerNorm(MModule):
         self.beta = np.zeros(normalized_shape)
 
     def forward(self, x):
+        # [B, S, E] -> [B, S, 1]
         mean = np.mean(x, axis=-1, keepdims=True)
+        # [B, S, 1] -> [B, S, 1]
         variance = np.var(x, axis=-1, keepdims=True)
+        # 
         normalized_x = (x - mean) / np.sqrt(variance + self.eps)
         return self.gamma * normalized_x + self.beta
     

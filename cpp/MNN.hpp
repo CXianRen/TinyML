@@ -8,7 +8,6 @@
 #include <cmath>
 
 namespace MNN {
-
     template<typename T>
     class Mat2D {
         public:

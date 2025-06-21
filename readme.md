@@ -61,3 +61,60 @@ There -> ['T', 'h', 'e', 'r', 'e', ...]
 ```
 
 
+
+# op support
+
+reshape (member function)
+copy
+contiguous
+
++
+-
+*
+/
+
++=
+-+
+*=
+/=
+
+
+
+
+np.transpose (T or class function)
+np.concatenate (class function)
+np.matmul
+np.where
+np.exp
+np.sum
+
+
+np.ones
+np.zeros
+np.random.rand
+np.triu
+np.mean
+np.var
+np.sqrt
+np.tanh
+
+#
+[S, HN, HD]
+[HN, S, HD]
+
+[1, 2, 3]
+
+[
+ [1, 2, 3]
+ [4, 5, 6]
+]
+
+[2, 1, 3]
+[
+  [
+    [1, 2, 3]
+  ]
+  [
+    [4, 5, 6]
+  ]
+]
