@@ -23,6 +23,7 @@ class MLinear(MModule):
 
     def forward_with_bias(self, x):
         # x shape: [B, S, E]
+        # [B, S, E] @ [E, E] -> [B, S, E]
         return np.dot(x, self.weight.T) + self.bias
 
     def forward_without_bias(self, x):
@@ -157,7 +158,8 @@ class MEmbed(MModule):
 
     def forward(self, input_ids):
         # input_ids shape: [B, S]
-        return self.weight[input_ids]  # Select embeddings for the given input IDs
+        return self.weight[input_ids]  
+        # Select embeddings for the given input IDs
 
 class GELUActivation(MModule):
     def __init__(self):

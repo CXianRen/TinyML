@@ -1,6 +1,7 @@
 #include "MTB.hpp"
 
 #include <iostream>
+using namespace mtb;
 
 typedef Tensor<float> TensorF;
 
@@ -90,7 +91,7 @@ void test_constructor() {
     }
   if (!compare_vectors(t3.strides(), std::vector<int>{12, 4, 1})) {
     throw std::runtime_error("Error: t3 strides do not match expected strides!");
-}
+  }
   if (!compare_vectors(t4.strides(), std::vector<int>{60, 20, 5, 1})) {
     throw std::runtime_error("Error: t4 strides do not match expected strides!");
   }
@@ -128,7 +129,7 @@ void test_constructor() {
   // data should be nullptr
   if (t3.data().get() != nullptr) {
     throw std::runtime_error("Error: t3 data should be nullptr after move!");
-}
+ }
   // strides should be empty
   if (!t3.strides().empty()) {
     throw std::runtime_error("Error: t3 strides should be empty after move!");
@@ -171,7 +172,7 @@ void test_deep_copy() {
   // compare strides
   if (!compare_vectors(t1.strides(), t2.strides())) {
     throw std::runtime_error("Error: t2 strides do not match t1 strides!");
-} 
+ } 
 
   // compare data
   for (auto i = 0; i < t1.size(); ++i) {
@@ -400,6 +401,157 @@ void test_inplace_op_div() {
   );
 }
 
+// test zeros 
+void test_zeros() {
+  std::cout << "Testing zeros..." << std::endl;
+  TensorF t1 = mtb::zeros<float>({2, 3});
+  if (!compare_vectors(t1.shape(), std::vector<int>{2, 3})) {
+    throw std::runtime_error("Error: t1 shape does not match expected shape after zeros!");
+  }
+  for (int i = 0; i < t1.size(); ++i) {
+    if (t1.data().get()[i] != 0.0f) {
+      throw std::runtime_error("Error: t1 data is not all zeros!");
+    }
+  }
+  std::cout << "All zeros tests passed!" << std::endl;
+}
+
+// test ones
+void test_ones() {
+  std::cout << "Testing ones..." << std::endl;
+  TensorF t1 = mtb::ones<float>({2, 3});
+  if (!compare_vectors(t1.shape(), std::vector<int>{2, 3})) {
+    throw std::runtime_error("Error: t1 shape does not match expected shape after ones!");
+  }
+  for (int i = 0; i < t1.size(); ++i) {
+    if (t1.data().get()[i] != 1.0f) {
+      throw std::runtime_error("Error: t1 data is not all ones!");
+    }
+  }
+  std::cout << "All ones tests passed!" << std::endl;
+}
+
+// test random
+void test_random() {
+  std::cout << "Testing random..." << std::endl;
+  TensorF t1 = mtb::random<float>({2, 3});
+  if (!compare_vectors(t1.shape(), std::vector<int>{2, 3})) {
+    throw std::runtime_error("Error: t1 shape does not match expected shape after random!");
+  }
+  for (int i = 0; i < t1.size(); ++i) {
+    if (t1.data().get()[i] < 0.0f || t1.data().get()[i] > 1.0f) {
+      throw std::runtime_error("Error: t1 data is not in the range [0, 1]!");
+    }
+  }
+  std::cout << "All random tests passed!" << std::endl;
+}
+
+// test triu
+void test_triu() {
+  std::cout << "Testing triu..." << std::endl;
+  TensorF t1({4, 4});
+  for (int i = 0; i < t1.shape()[0]; ++i) {
+    for (int j = 0; j < t1.shape()[1]; ++j) {
+      t1(i, j) = static_cast<float>(i * t1.shape()[1] + j);
+    }
+  }
+  TensorF t2 = mtb::triu(t1);
+  if (!compare_vectors(t2.shape(), t1.shape())) {
+    throw std::runtime_error("Error: t2 shape does not match t1 shape after triu!");
+  }
+  for (int i = 0; i < t2.shape()[0]; ++i) {
+    for (int j = 0; j < t2.shape()[1]; ++j) {
+      if (i > j && t2(i, j) != 0.0f) {
+        throw std::runtime_error("Error: t2(" + 
+          std::to_string(i) + 
+          ", " + std::to_string(j) + 
+          ") is not zero after triu!");
+      }
+      if (i <= j && t2(i, j) != t1(i, j)) {
+        throw std::runtime_error(
+          "Error: t2(" + std::to_string(i) + 
+          ", " + std::to_string(j) + 
+          ") does not match t1 value after triu!");
+      }
+    }
+  }
+  std::cout << "All triu tests passed!" << std::endl;
+}
+
+// test transpose
+void test_transpose() {
+  std::cout << "Testing transpose..." << std::endl;
+  TensorF t1({2, 3});
+  for (int i = 0; i < t1.shape()[0]; ++i) {
+    for (int j = 0; j < t1.shape()[1]; ++j) {
+      t1(i, j) = static_cast<float>(i * t1.shape()[1] + j);
+    }
+  }
+  TensorF t2 = mtb::transpose(t1, {1, 0}); // transpose
+  if (!compare_vectors(t2.shape(), std::vector<int>{3, 2})) {
+    throw std::runtime_error(
+      "Error: t2 shape does not match expected shape after transpose!");
+  }
+
+  // check strides
+  if (!compare_vectors(t2.strides(), std::vector<int>{1, 3})) {
+    throw std::runtime_error(
+      "Error: t2 strides do not match expected strides after transpose!");
+  }
+
+  for (int i = 0; i < t2.shape()[0]; ++i) {
+    for (int j = 0; j < t2.shape()[1]; ++j) {
+      if (t2(i, j) != t1(j, i)) {
+        throw std::runtime_error("Error: t2(" + 
+          std::to_string(i) + 
+          ", " + std::to_string(j) + 
+          ") does not match t1 transposed value!");
+      }
+    }
+  }
+}
+
+// test concatenation
+void test_concat() {
+  std::cout << "Testing concatenation..." << std::endl;
+  TensorF t1({2, 3});
+  TensorF t2({2, 3});
+  std::cout << "t1 shape: " << t1.shape() << std::endl;
+  std::cout << "t1 strides: " << t1.strides() << std::endl;
+  std::cout << "size of t1: " << t1.size() << std::endl;
+
+  // Fill tensors with values
+  for (int i = 0; i < t1.size(); ++i) {
+    t1.data().get()[i] = static_cast<float>(i);
+    t2.data().get()[i] = static_cast<float>(i + 6); // offset by 6
+  }
+  
+  TensorF t_concat = mtb::concatenate<float>({t1, t2}, 0); // concatenate along first axis
+  if (!compare_vectors(t_concat.shape(), std::vector<int>{4, 3})) {
+    throw std::runtime_error("Error: t_concat shape does not match expected shape after concat!");
+  }
+  
+  for (int i = 0; i < t_concat.shape()[0]; ++i) {
+    for (int j = 0; j < t_concat.shape()[1]; ++j) {
+      float expected_value = (i < 2) ? t1(i, j) : t2(i - 2, j);
+      if (t_concat(i, j) != expected_value) {
+        throw std::runtime_error("Error: t_concat(" + 
+          std::to_string(i) + 
+          ", " + std::to_string(j) + 
+          ") does not match expected value after concat!");
+      }
+    }
+  }
+  
+  // Check the strides
+  if (!compare_vectors(t_concat.strides(), std::vector<int>{3, 1})) {
+    throw std::runtime_error("Error: t_concat strides do not match expected strides after concat!");
+  }
+
+  std::cout << "All concatenation tests passed!" << std::endl;
+}
+
+
 int main(int argc, char** argv) {
   test_constructor();
   test_deep_copy();
@@ -413,5 +565,12 @@ int main(int argc, char** argv) {
   test_inplace_op_sub();
   test_inplace_op_mul();
   test_inplace_op_div();
+  // 
+  test_zeros();
+  test_ones();
+  test_random();
+  test_triu();
+  test_transpose();
+  test_concat();
   return 0;
 }

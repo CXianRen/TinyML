@@ -79,20 +79,23 @@ contiguous
 /=
 
 
-
-
 np.transpose (T or class function)
-np.concatenate (class function)
-np.matmul
-np.where
-np.exp
-np.sum
 
+np.matmul
+np.concatenate (class function)
+
+np.where
 
 np.ones
 np.zeros
 np.random.rand
 np.triu
+
+
+np.exp
+np.max
+np.min
+np.sum
 np.mean
 np.var
 np.sqrt

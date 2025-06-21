@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -std=c++17 -O2 -Wall
+CXXFLAGS = -std=c++17 -O2 -Wall -Wfatal-errors
 
 SRC = test_MTB.cpp
 TARGET = ./build/test_MTB
