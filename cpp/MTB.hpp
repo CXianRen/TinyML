@@ -6,6 +6,19 @@
 #include <stdexcept>
 #include <cstring>
 #include <cmath>
+#include <iostream>
+
+template <typename T>
+std::ostream& operator<<(std::ostream& os, const std::vector<T>& vec) {
+    os << "[";
+    for (int i = 0; i < vec.size(); ++i) {
+        os << vec[i];
+        if (i != vec.size() - 1)
+            os << ", ";
+    }
+    os << "]";
+    return os;
+}
 
 namespace mtb {
 
@@ -106,6 +119,22 @@ class Tensor {
         return *this;
     }
     
+    bool is_contiguous() const {
+        // Check if the tensor is contiguous in memory
+        if (shape_.empty()) return true; // Empty tensor is considered contiguous
+        int expected_stride = 1;
+        for (int i = static_cast<int>(shape_.size()) - 1; i >= 0; --i) {
+            if (strides_[i] != expected_stride) {
+                std::cout << "Tensor is not contiguous: " 
+                          << "expected stride " << expected_stride 
+                          << ", got " << strides_[i] << std::endl;
+                return false;
+            }
+            expected_stride *= shape_[i];
+        }
+        return true;
+    }
+
     // deep copy
     Tensor copy() const {
         Tensor c(shape_);
@@ -403,11 +432,19 @@ Tensor<T> concatenate_dim0(const std::vector<Tensor<T>> &tensors) {
                 " expected size: " + std::to_string(tensor.shape()[0] * tensor.shape()[1]) +
                 ", actual size: " + std::to_string(tensor.size()));
         }
-        // copy the data
-        memcpy(result.data().get() + offset, 
-               tensor.data().get(), 
-               tensor.size() * sizeof(T));
-        offset += tensor.size();
+        auto s_ptr = tensor.data().get();
+        auto d_ptr = result.data().get();
+        if(tensor.is_contiguous()){
+             // copy the data
+            memcpy(d_ptr + offset, 
+                   s_ptr, 
+                   tensor.size() * sizeof(T));
+            offset += tensor.size();
+        }else{
+            // unspported case
+            throw std::invalid_argument(
+                "Tensor is not contiguous, cannot concatenate");
+        }
     }
     return result;
 }
@@ -451,6 +488,8 @@ Tensor<T> max_lastdim(const Tensor<T> &tensor){
     // create a new tensor with the shape of the original tensor
     // except for the last dimension
     std::vector<int> new_shape = tensor.shape();
+    // reduce last dimension to 1
+    new_shape[new_shape.size() - 1] = 1; 
     Tensor<T> result(new_shape);
 
     int last_dim = tensor.shape().back();
@@ -489,50 +528,6 @@ Tensor<T> max(const Tensor<T> &tensor,
     }    
 }
 
-// exp function
-template <typename T>
-Tensor<T> exp_lastdim(const Tensor<T> &tensor) {
-    if (tensor.shape().empty()) {
-        throw std::invalid_argument("Tensor must have at least one dimension");
-    }
-    // create a new tensor with the shape of the original tensor
-    // except for the last dimension
-    std::vector<int> new_shape = tensor.shape();
-    Tensor<T> result(new_shape);
-    
-    // compute the exponential along the last dimension
-    int last_dim = tensor.shape().back();
-    
-    // compute the offset for the last dimension
-    int offset = 0;
-    auto t_ptr = tensor.data().get();
-    auto r_ptr = result.data().get();
-    for (int i = 0; i < tensor.size() / last_dim; ++i) {
-        for (int j = 0; j < last_dim; ++j) {
-            r_ptr[offset + j] = exp(t_ptr[offset + j]);
-        }
-        offset += last_dim;
-    }
-    return result;
-}
-
-template <typename T>
-Tensor<T> exp(const Tensor<T> &tensor, 
-                int axes) {
-    // is the last dimension
-    if (axes == tensor.shape().size() - 1) {
-        axes = -1; // exp along the last dimension
-    }
-
-    switch (axes) {
-        case -1: // exp along the last dimension
-            return exp_lastdim(tensor);
-        default:
-            throw std::invalid_argument(
-                "Unsupported axes for exp");
-    }    
-}
-
 // sum function
 template <typename T>
 Tensor<T> sum_lastdim(const Tensor<T> &tensor) {
@@ -542,6 +537,8 @@ Tensor<T> sum_lastdim(const Tensor<T> &tensor) {
     // create a new tensor with the shape of the original tensor
     // except for the last dimension
     std::vector<int> new_shape = tensor.shape();
+    // reduce last dimension to 1
+    new_shape[new_shape.size() - 1] = 1;
 
     Tensor<T> result(new_shape);
     
@@ -589,6 +586,10 @@ Tensor<T> mean_lastdim(const Tensor<T> &tensor) {
     // create a new tensor with the shape of the original tensor
     // except for the last dimension
     std::vector<int> new_shape = tensor.shape();
+
+    // reduce last dimension to 1
+    new_shape[new_shape.size() - 1] = 1;
+
     Tensor<T> result(new_shape);
     
     // compute the mean along the last dimension
@@ -635,6 +636,9 @@ Tensor<T> var_lastdim(const Tensor<T> &tensor) {
     // create a new tensor with the shape of the original tensor
     // except for the last dimension
     std::vector<int> new_shape = tensor.shape();
+    // reduce last dimension to 1
+    new_shape[new_shape.size() - 1] = 1;
+    
     Tensor<T> result(new_shape);
     
     // compute the variance along the last dimension
@@ -680,45 +684,46 @@ Tensor<T> var(const Tensor<T> &tensor,
     }
 }
 
-// sqrt function
-template <typename T>
-Tensor<T> sqrt(const Tensor<T> &tensor) {
+template <typename T, typename F>
+Tensor<T> unary_elementwise(const Tensor<T> &tensor, F func, const char* opname) {
     if (tensor.shape().empty()) {
         throw std::invalid_argument("Tensor must have at least one dimension");
     }
-    // create a new tensor with the same shape as the original tensor
     Tensor<T> result(tensor.shape());
-    
-    // compute the square root for each element
     auto t_ptr = tensor.data().get();
     auto r_ptr = result.data().get();
     for (int i = 0; i < tensor.size(); ++i) {
-        if (t_ptr[i] < 0) {
-            throw std::invalid_argument(
-                "Cannot compute square root of negative number");
-        }
-        r_ptr[i] = std::sqrt(t_ptr[i]);
+        r_ptr[i] = func(t_ptr[i]);
     }
     return result;
+}
+
+// sqrt function
+template <typename T>
+Tensor<T> sqrt(const Tensor<T> &tensor) {
+    return unary_elementwise<T>(tensor, [](const T& v) {
+        if (v < 0) throw std::invalid_argument("Cannot compute square root of negative number");
+        return std::sqrt(v);
+    }, "sqrt");
+}
+
+// exp function
+template <typename T>
+Tensor<T> exp(const Tensor<T> &tensor) {
+    return unary_elementwise<T>(tensor, [](const T& v) {
+        return std::exp(v);
+    }, "exp");
 }
 
 // tanh function
 template <typename T>
 Tensor<T> tanh(const Tensor<T> &tensor) {
-    if (tensor.shape().empty()) {
-        throw std::invalid_argument("Tensor must have at least one dimension");
-    }
-    // create a new tensor with the same shape as the original tensor
-    Tensor<T> result(tensor.shape());
-    
-    // compute the tanh for each element
-    auto t_ptr = tensor.data().get();
-    auto r_ptr = result.data().get();
-    for (int i = 0; i < tensor.size(); ++i) {
-        r_ptr[i] = std::tanh(t_ptr[i]);
-    }
-    return result;
+    return unary_elementwise<T>(tensor, [](const T& v) {
+        return std::tanh(v);
+    }, "tanh");
 }
+
+
 
 // matmul function
 // template <typename T>
