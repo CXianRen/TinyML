@@ -121,3 +121,10 @@ np.tanh
     [4, 5, 6]
   ]
 ]
+
+
+# boardcasting
+[](https://numpy.org/doc/stable/user/basics.broadcasting.html)
+
+1. scalar boardcast
+2. 

@@ -303,6 +303,16 @@ class Tensor {
 
 // Create tensors
 template <typename T>
+Tensor<T> scalar_to_tensor(T value) {
+    // Create a 0D tensor (scalar)
+    std::vector<int> shape = {1};
+    Tensor<T> tensor(shape);
+    // Assign the value to the tensor
+    tensor(0) = value;
+    return tensor;
+}
+
+template <typename T>
 Tensor<T> zeros(std::vector<int> shape) {
     Tensor<T> tensor(shape);
     // Initialize all elements to zero
@@ -724,7 +734,6 @@ Tensor<T> tanh(const Tensor<T> &tensor) {
 }
 
 
-
 // matmul function
 // template <typename T>
 // Tensor<T> matmul(const Tensor<T> &a, const Tensor<T> &b) {
@@ -754,7 +763,6 @@ Tensor<T> tanh(const Tensor<T> &tensor) {
 //             r_ptr[i * result.strides()[0] + j] = sum;
 //         }
 //     }
-    
 //     return result;
 // }
 
