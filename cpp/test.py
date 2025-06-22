@@ -37,13 +37,21 @@ import numpy as np
 # print(input_transposed)
 
 import numpy as np
+# (3, 2).T -> (2, 2, 2, 3)
+a = np.array([
+              [1, 2], 
+              [3, 4], 
+              [5, 6]])
 
-a = np.array(10)                 # scalar as 0-d array
-b = np.ones((2, 3))              # target shape
+print("a shape:", a.shape)
+print("a strides:", a.strides)
+a = a.T # Transpose to (3, 2)
+print("Transposed a shape:", a.shape)
+print("Transposed a strides:", a.strides)
 
-broadcasted = np.broadcast_to(a, b.shape)
+broadcasted = np.broadcast_to(a, (2, 2, 2, 3))
 
-print("Broadcasted array:\n", broadcasted)
+# print("Broadcasted array:\n", broadcasted)
 # Broadcasted shape: (2, 3)
 print("Broadcasted shape:", broadcasted.shape)
 print("Broadcasted strides:", broadcasted.strides)

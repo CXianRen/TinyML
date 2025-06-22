@@ -28,12 +28,19 @@ class Tensor;
 template <typename T>
 Tensor<T> transpose(Tensor<T>& tensor, std::vector<int> axes);
 
+template <typename T>
+Tensor<T> boardcast(const Tensor<T> &tensor, 
+                 const std::vector<int> &shape);
 
+            
 template <typename T>
 class Tensor {
     public:
-    friend Tensor<T> transpose<>(Tensor<T> &tensor, std::vector<int> axes);
-
+    friend Tensor<T> transpose<>(Tensor<T> &tensor, 
+                std::vector<int> axes);
+    friend Tensor<T> boardcast<>(const Tensor<T> &tensor, 
+                const std::vector<int> &shape);
+                
     // Constructor
     Tensor(const std::vector<int> &shape)
         :shape_(shape){
@@ -299,9 +306,6 @@ class Tensor {
 
 
 // auto boardcast function
-// scalar broadcast
-
-// Create tensors
 template <typename T>
 Tensor<T> scalar_to_tensor(T value) {
     // Create a 0D tensor (scalar)
@@ -312,6 +316,69 @@ Tensor<T> scalar_to_tensor(T value) {
     return tensor;
 }
 
+template <typename T>
+Tensor<T> boardcast(const Tensor<T> &tensor, 
+                 const std::vector<int> &shape) {
+    // Check if the tensor can be broadcasted to the new shape
+    if (tensor.shape().size() > shape.size()) {
+        throw std::invalid_argument(
+            "Tensor cannot be broadcasted to the new shape");
+    }
+
+    // create a shallow copy, for a new view.
+    Tensor<T> result = tensor;
+    
+    /*
+    will check if the tensor can be broadcasted to the new shape
+    in other functions, when computing the parameter: shape
+    here we just create a new view of the tensor
+    with the new shape, and the same data pointer.
+    and also update the strides
+    */
+
+    /*
+       extend the dimensions to match the new shape.
+       e.g. t = [2,3] new t = [1, 4, 2, 3]
+            s = [3,1]
+         t-> [1, 1, 2, 3] (padding 2 dimensions)
+         s-> [0, 0, 3, 1] (padding 2 dimensions)
+
+    */
+    std::vector<int> r_shape = result.shape();
+    std::vector<int> r_strides = result.strides();
+    
+    int padding = shape.size() - r_shape.size();
+    for (int i = 0; i < padding; ++i) {
+        r_shape.insert(r_shape.begin(), 1); // prepend 1
+        r_strides.insert(r_strides.begin(), 0); // prepend 0 strides
+    }
+
+    // broadcast each dimension
+    for (size_t i = 0; i < r_shape.size(); ++i) {
+        if (r_shape[i] != shape[i])
+        {
+            // if the tensor shape is 1, then we can broadcast it
+            r_shape[i] = shape[i];
+            r_strides[i] = 0; // reset strides for the new dimension
+        }
+    }
+    // update the result tensor shape and strides
+    result.shape_ = r_shape;
+    result.strides_ = r_strides;
+
+    return result;
+}
+
+template <typename T>
+Tensor<T> boardcast(const T &scalar, 
+                    const std::vector<int> &shape){
+    // Convert scalar to tensor
+    Tensor<T> tensor = scalar_to_tensor(scalar);
+    // Broadcast the tensor to the new shape
+    return boardcast(tensor, shape);
+}
+
+// Create tensors
 template <typename T>
 Tensor<T> zeros(std::vector<int> shape) {
     Tensor<T> tensor(shape);

@@ -1,7 +1,7 @@
 #ifndef __TEST_COMMON_HPP__
 #define __TEST_COMMON_HPP__
 #include "MTB.hpp"
-
+#include <assert.h>
 // compare two vectors for equality
 template <typename T>
 bool compare_vectors(const std::vector<T>& a, const std::vector<T>& b) {
@@ -11,6 +11,18 @@ bool compare_vectors(const std::vector<T>& a, const std::vector<T>& b) {
     }
     return true;
 }
+
+#define START_TEST() \
+    std::cout << \
+    "Start " \
+    << __FUNCTION__ << std::endl
+
+
+#define PASSLOG() \
+    std::cout << \
+    "[Passed] " \
+    << __FUNCTION__ << std::endl
+
 
 
 #endif // __TEST_COMMON_HPP__
