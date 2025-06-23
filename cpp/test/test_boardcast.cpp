@@ -17,7 +17,6 @@ void test_scalar_tensor() {
   PASSLOG();
 }
 
-
 void test_boardcast() {
   START_TEST();
   // This function is not implemented yet
@@ -105,8 +104,41 @@ void test_boardcast() {
   PASSLOG();
 }
 
+void test_compute_boardcast_shape(){
+  START_TEST();
+  
+  float scalar = 3.14f;
+  TensorF t1({2, 3});
+  auto shape1 = mtb::compute_boardcast_shape(scalar, t1);
+  assert(shape1 == std::vector<int>({2, 3}));
+
+  TensorF t2({3, 1});
+  TensorF t3({3, 4});
+  auto shape2 = mtb::compute_boardcast_shape(t2, t3);
+  assert(shape2 == std::vector<int>({3, 4}));
+
+  TensorF t4({1, 4});
+  TensorF t5({3, 4});
+  auto shape3 = mtb::compute_boardcast_shape(t4, t5);
+  assert(shape3 == std::vector<int>({3, 4}));
+
+  TensorF t6({3, 4, 5});
+  TensorF t7({1,5});
+  auto shape4 = mtb::compute_boardcast_shape(t6, t7);
+  assert(shape4 == std::vector<int>({3, 4, 5}));
+
+  TensorF t8({2, 3});
+  TensorF t9({2, 2, 2, 3});
+  auto shape5 = mtb::compute_boardcast_shape(t8, t9);
+  assert(shape5 == std::vector<int>({2, 2, 2, 3}));
+
+
+  PASSLOG();
+}
+
 int main(int argc, char** argv) {
   test_scalar_tensor();
   test_boardcast();
+  test_compute_boardcast_shape();
   return 0;
 }

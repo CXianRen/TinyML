@@ -36,23 +36,53 @@ import numpy as np
 # input_transposed = np.transpose(input, (1, 0, 2))
 # print(input_transposed)
 
-import numpy as np
-# (3, 2).T -> (2, 2, 2, 3)
-a = np.array([
-              [1, 2], 
-              [3, 4], 
-              [5, 6]])
+# import numpy as np
+# # (3, 2).T -> (2, 2, 2, 3)
+# a = np.array([
+#               [1, 2], 
+#               [3, 4], 
+#               [5, 6]])
 
-print("a shape:", a.shape)
-print("a strides:", a.strides)
-a = a.T # Transpose to (3, 2)
-print("Transposed a shape:", a.shape)
-print("Transposed a strides:", a.strides)
+# print("a shape:", a.shape)
+# print("a strides:", a.strides)
+# a = a.T # Transpose to (3, 2)
+# print("Transposed a shape:", a.shape)
+# print("Transposed a strides:", a.strides)
 
-broadcasted = np.broadcast_to(a, (2, 2, 2, 3))
+# broadcasted = np.broadcast_to(a, (2, 2, 2, 3))
 
-# print("Broadcasted array:\n", broadcasted)
-# Broadcasted shape: (2, 3)
-print("Broadcasted shape:", broadcasted.shape)
-print("Broadcasted strides:", broadcasted.strides)
+# # print("Broadcasted array:\n", broadcasted)
+# # Broadcasted shape: (2, 3)
+# print("Broadcasted shape:", broadcasted.shape)
+# print("Broadcasted strides:", broadcasted.strides)
 # Broadcasted strides: (0, 0)
+
+# import numpy as np
+
+# # [2, 2, 3] 
+# a = np.array([[[1, 2, 3],
+#                [4, 5, 6]], 
+#               [[1, 2, 3],
+#                [4, 5, 6]]])
+    
+# b = np.ones((1, 2, 2, 3))
+
+# r = np.matmul(b, np.transpose(a, (0, 2, 1)))
+# print("a shape:", a.shape)
+# print("b shape:", b.shape)
+# print("Result shape:", r.shape)
+# print("Result strides:", r.strides)
+# print("Result:\n", r)
+
+
+import numpy as np
+
+# [2, 2, 3] 
+a = np.random.rand(2, 1, 3, 4)
+print("a shape:", a.shape)
+print("a strides:", a.strides)   
+print("a data address:", a.__array_interface__['data'][0]) 
+b = a[1][0]
+print("b shape:", b.shape)
+print("b strides:", b.strides)
+print("b data address:", b.__array_interface__['data'][0])

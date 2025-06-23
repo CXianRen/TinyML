@@ -7,6 +7,7 @@
 #include <cstring>
 #include <cmath>
 #include <iostream>
+#include <sstream>
 
 template <typename T>
 std::ostream& operator<<(std::ostream& os, const std::vector<T>& vec) {
@@ -19,6 +20,7 @@ std::ostream& operator<<(std::ostream& os, const std::vector<T>& vec) {
     os << "]";
     return os;
 }
+
 
 namespace mtb {
 
@@ -40,7 +42,7 @@ class Tensor {
                 std::vector<int> axes);
     friend Tensor<T> boardcast<>(const Tensor<T> &tensor, 
                 const std::vector<int> &shape);
-                
+
     // Constructor
     Tensor(const std::vector<int> &shape)
         :shape_(shape){
@@ -67,6 +69,18 @@ class Tensor {
             std::default_delete<T[]>());
         size_ = total_size;
     }
+
+    Tensor(const std::vector<int> &shape, 
+                const std::vector<T> &data)
+        :Tensor(shape) {
+        if (data.size() != size_) {
+            throw std::invalid_argument(
+                "Data size must match the total size of the shape");
+        }
+        // Copy data into the tensor
+        memcpy(data_.get(), data.data(), size_ * sizeof(T));
+    }
+
     // Destructor
     ~Tensor() {}
 
@@ -187,33 +201,33 @@ class Tensor {
     /* Op */
     // using (i) to access 1 dimension tensor
     T& operator()(const int i) {
-        if (i < 0 || i >= shape_[0]) {
-            throw std::out_of_range("Index out of range");
-        }
-        return data_.get()[i];
+        // if (i < 0 || i >= shape_[0]) {
+        //     throw std::out_of_range("Index out of range");
+        // }
+        return data_.get()[i * strides_[0]];
     }
 
     // using (i, j) to access 2 dimension tensor
     T& operator()(const int i, const int j) {
-        if (i < 0 || i >= shape_[0] || j < 0 || j >= shape_[1]) {
-            throw std::out_of_range("Index out of range");
-        }
+        // if (i < 0 || i >= shape_[0] || j < 0 || j >= shape_[1]) {
+        //     throw std::out_of_range("Index out of range");
+        // }
         return data_.get()[i * strides_[0] + j * strides_[1]];
     }
 
     // using (i, j, k) to access 3 dimension tensor
     T& operator()(const int i, const int&  j,const int k) {
-        if (i < 0 || i >= shape_[0] || j < 0 || j >= shape_[1] || k < 0 || k >= shape_[2]) {
-            throw std::out_of_range("Index out of range");
-        }
+        // if (i < 0 || i >= shape_[0] || j < 0 || j >= shape_[1] || k < 0 || k >= shape_[2]) {
+        //     throw std::out_of_range("Index out of range");
+        // }
         return data_.get()[i * strides_[0] + j * strides_[1] + k * strides_[2]];
     }
     // using (i, j, k, l) to access 4 dimension tensor
     T& operator()(const int i, const int j, 
                     const int k, const int l) {
-        if (i < 0 || i >= shape_[0] || j < 0 || j >= shape_[1] || k < 0 || k >= shape_[2] || l < 0 || l >= shape_[3]) {
-            throw std::out_of_range("Index out of range");
-        }
+        // if (i < 0 || i >= shape_[0] || j < 0 || j >= shape_[1] || k < 0 || k >= shape_[2] || l < 0 || l >= shape_[3]) {
+        //     throw std::out_of_range("Index out of range");
+        // }
         return data_.get()[i * strides_[0] + j * strides_[1] + k * strides_[2] + l * strides_[3]];
     }
     
@@ -306,6 +320,45 @@ class Tensor {
 
 
 // auto boardcast function
+template <typename T>
+std::vector<int> compute_boardcast_shape(
+    const T &scalar, 
+    Tensor<T> &tensor) {
+    return tensor.shape();;
+}
+
+template <typename T>
+std::vector<int> compute_boardcast_shape(
+    const Tensor<T> &tensor,
+    const T &scalar) {
+    return compute_boardcast_shape<T>(scalar, tensor);
+}
+
+template <typename T>
+std::vector<int> compute_boardcast_shape(
+    const Tensor<T> &tensor1,
+    const Tensor<T> &tensor2) {
+    
+    auto shape1 = tensor1.shape();
+    auto shape2 = tensor2.shape();
+
+    auto max_size = std::max(shape1.size(), shape2.size());
+    std::vector<int> result_shape(max_size, 1);
+    for (size_t i = 0; i < max_size; ++i) {
+        int dim1 = (i < shape1.size()) ? shape1[shape1.size() - 1 - i] : 1;
+        int dim2 = (i < shape2.size()) ? shape2[shape2.size() - 1 - i] : 1;
+
+        if (dim1 != dim2 && dim1 != 1 && dim2 != 1) {
+            throw std::invalid_argument(
+                "Shapes are not compatible for broadcasting");
+        }
+        result_shape[max_size - 1 - i] = std::max(dim1, dim2);
+    }
+    return result_shape;
+
+}
+
+
 template <typename T>
 Tensor<T> scalar_to_tensor(T value) {
     // Create a 0D tensor (scalar)
@@ -800,38 +853,81 @@ Tensor<T> tanh(const Tensor<T> &tensor) {
     }, "tanh");
 }
 
+// matmul function 2D
+template <typename T>
+void _GEMM(const Tensor<T>& a, const Tensor<T>& b, T* data){
+    // a: [M, N], b: [N, K] -> result: [M, K]
+ 
+    int M = a.shape()[0];
+    int N = a.shape()[1];
+    int K = b.shape()[1];
+
+    int a_stride0 = a.strides()[0];
+    int a_stride1 = a.strides()[1];
+    int b_stride0 = b.strides()[0];
+    int b_stride1 = b.strides()[1];
+
+    auto a_ptr = a.data().get();
+    auto b_ptr = b.data().get();
+
+    // Initialize the result tensor
+    for (int i = 0; i < M; ++i) {
+        for (int j = 0; j < K; ++j) {
+            for (int k = 0; k < N; ++k) {
+                data[i * K + j] += 
+                    a_ptr[i * a_stride0 + k * a_stride1] * 
+                    b_ptr[k * b_stride0 + j * b_stride1];
+            }
+        }
+    }
+}
 
 // matmul function
-// template <typename T>
-// Tensor<T> matmul(const Tensor<T> &a, const Tensor<T> &b) {
-//     if (a.shape().size() != 2 || b.shape().size() != 2) {
-//         throw std::invalid_argument("Both tensors must be 2D for matmul");
-//     }
-//     if (a.shape()[1] != b.shape()[0]) {
-//         throw std::invalid_argument("Inner dimensions must match for matmul");
-//     }
+template <typename T>
+Tensor<T> matmul(const Tensor<T> a, const Tensor<T> b) {
+    // fist check if the shapes are not equal
+    auto a_shape = a.shape();
+    auto b_shape = b.shape();
+
+    // if the shapes are not equal, then try to broadcast them
+    if (a_shape.size() != b_shape.size()){
+        auto a_b_shape = compute_boardcast_shape(a, b);
+        // boardcast a and b to the same shape
+        a = boardcast(a, a_b_shape);
+        b = boardcast(b, a_b_shape);
+        a_shape = a.shape();
+        b_shape = b.shape();
+    }
+
+    // check if the last 2 dimensions of a and b compatible for matrix multiplication
+    if (a_shape.size() < 2 || b_shape.size() < 2)
+    {
+        throw std::invalid_argument(
+            "Both tensors must have at least 2 dimensions for matrix multiplication");
+    }
+
+    if (a_shape[a_shape.size() - 1] != b_shape[b_shape.size() - 2]) {
+        
+        std::stringstream ss;
+        ss << "Shapes are not compatible for matrix multiplication: "
+           << "a: " << a_shape << ", b: " << b_shape;
+        throw std::invalid_argument(ss.str());
+    }
     
-//     // Create a new tensor for the result
-//     std::vector<int> result_shape = {a.shape()[0], b.shape()[1]};
-//     Tensor<T> result(result_shape);
-    
-//     // Perform matrix multiplication
-//     auto a_ptr = a.data().get();
-//     auto b_ptr = b.data().get();
-//     auto r_ptr = result.data().get();
-    
-//     for (int i = 0; i < a.shape()[0]; ++i) {
-//         for (int j = 0; j < b.shape()[1]; ++j) {
-//             T sum = 0;
-//             for (int k = 0; k < a.shape()[1]; ++k) {
-//                 sum += a_ptr[i * a.strides()[0] + k] * 
-//                        b_ptr[k * b.strides()[0] + j];
-//             }
-//             r_ptr[i * result.strides()[0] + j] = sum;
-//         }
-//     }
-//     return result;
-// }
+    // compute the shape of the result tensor
+    // [x,x, M, N] @ [x,x, N, K] = [x,x, M, K]
+    int M = a_shape[a_shape.size() - 2];
+    int N = a_shape[a_shape.size() - 1];
+    int K = b_shape[b_shape.size() - 1];
+
+    std::vector<int> result_shape = a_shape;
+    result_shape[result_shape.size() - 2] = M;
+    result_shape[result_shape.size() - 1] = K;
+
+    Tensor<T> result(result_shape);
+
+    return result;
+}
 
 } // namespace mtb
 
