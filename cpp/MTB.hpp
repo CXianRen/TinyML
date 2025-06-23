@@ -116,12 +116,10 @@ class Tensor {
     }
     // Copy assignment operator, shallow copy
     Tensor& operator=(const Tensor &other) {
-        if (this != &other) {
-            shape_ = other.shape_;
-            strides_ = other.strides_;
-            data_ = other.data_;
-            size_ = other.size_;
-        }
+        shape_ = other.shape_;
+        strides_ = other.strides_;
+        data_ = other.data_;
+        size_ = other.size_;
         return *this;
     }
     // Move assignment operator
@@ -199,6 +197,33 @@ class Tensor {
 
 
     /* Op */
+    // using [] to access a innner dimension tensor
+    Tensor operator[](const int i) const {
+        if (i < 0 || i >= shape_[0]) {
+            throw std::out_of_range("Index out of range");
+        }
+        // create a new tensor with the same data pointer
+        Tensor<T> result= *this; // shallow copy
+        
+        // update the shape and strides of the result tensor
+        result.shape_.erase(result.shape_.begin());
+        int stride = result.strides_[0];
+        result.strides_.erase(result.strides_.begin());
+
+        // update the data pointer to point to the correct location
+        result.data_ = std::shared_ptr<T[]>(
+            data_, data_.get() + i * stride);
+        
+        // update the size of the result tensor
+        int new_size = 1;
+        for (int dim : result.shape_) {
+            new_size *= dim;
+        }
+        result.size_ = new_size;
+
+        return result;
+    }
+
     // using (i) to access 1 dimension tensor
     T& operator()(const int i) {
         // if (i < 0 || i >= shape_[0]) {
@@ -873,6 +898,7 @@ void _GEMM(const Tensor<T>& a, const Tensor<T>& b, T* data){
     // Initialize the result tensor
     for (int i = 0; i < M; ++i) {
         for (int j = 0; j < K; ++j) {
+            // data[i * K + j] = T(0); // Initialize to zero
             for (int k = 0; k < N; ++k) {
                 data[i * K + j] += 
                     a_ptr[i * a_stride0 + k * a_stride1] * 
@@ -882,9 +908,38 @@ void _GEMM(const Tensor<T>& a, const Tensor<T>& b, T* data){
     }
 }
 
+
+std::vector<std::vector<int>> generate_batch_indices(
+        const std::vector<int>& shape) {
+    std::vector<std::vector<int>> result;
+    
+    int ndim = shape.size();
+    
+    std::vector<int> indices(ndim, 0);
+    while (true) {
+        result.push_back(indices);
+        int i = ndim - 1;
+        while (i >= 0) {
+            indices[i]++;
+            if (indices[i] < shape[i]) {
+                break;
+            }
+            indices[i] = 0;
+            i--;
+        }
+        if (i < 0) {
+            break; // all indices have been generated
+        }
+    }
+    return std::move(result);
+}
+
 // matmul function
 template <typename T>
-Tensor<T> matmul(const Tensor<T> a, const Tensor<T> b) {
+Tensor<T> matmul(const Tensor<T>& m1, const Tensor<T>& m2) {
+    Tensor<T> a = m1;
+    Tensor<T> b = m2;
+
     // fist check if the shapes are not equal
     auto a_shape = a.shape();
     auto b_shape = b.shape();
@@ -924,12 +979,41 @@ Tensor<T> matmul(const Tensor<T> a, const Tensor<T> b) {
     result_shape[result_shape.size() - 2] = M;
     result_shape[result_shape.size() - 1] = K;
 
-    Tensor<T> result(result_shape);
+    Tensor<T> result = mtb::zeros<T>(result_shape);
 
+    // generate batch shape
+    std::vector<int> batch_shape =
+        std::vector<int>(a_shape.begin(), 
+                         a_shape.end() - 2);
+    
+    // generate indexes for batch dimensions
+    auto batch_indices = generate_batch_indices(batch_shape);
+
+    // std::cout << "Batch indices size: " << batch_indices.size() << std::endl;
+    if(batch_indices.empty()) {
+        // if there are no batch dimensions, just do the matrix multiplication
+        _GEMM(a, b, result.data().get());
+    }else{
+        // if there is only one batch dimension, just do the matrix multiplication        
+        for (int i =0; i < batch_indices.size(); ++i) {
+            // create a view of the tensors for the current batch
+            auto indices = batch_indices[i];
+            // std::cout << "Batch indices: " << indices << std::endl;
+
+            // create a view of the tensors for the current batch
+            for (size_t j = 0; j < indices.size(); ++j) {
+                // create a view of the tensor for the current batch
+                a = m1[indices[j]];
+                b = m2[indices[j]];
+            }    
+            // perform matrix multiplication for the current batch
+            _GEMM(a, b, result.data().get() + 
+                i * M * K); // offset by batch size
+        }
+    }
     return result;
 }
 
 } // namespace mtb
-
 
 #endif // __MTB_HPP__

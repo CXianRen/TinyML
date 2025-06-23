@@ -75,14 +75,37 @@ import numpy as np
 # print("Result:\n", r)
 
 
+# import numpy as np
+
+# # [2, 2, 3] 
+# a = np.random.rand(2, 1, 3, 4)
+# print("a shape:", a.shape)
+# print("a strides:", a.strides)   
+# print("a data address:", a.__array_interface__['data'][0]) 
+# b = a[1][0]
+# print("b shape:", b.shape)
+# print("b strides:", b.strides)
+# print("b data address:", b.__array_interface__['data'][0])
+
 import numpy as np
 
-# [2, 2, 3] 
-a = np.random.rand(2, 1, 3, 4)
-print("a shape:", a.shape)
-print("a strides:", a.strides)   
-print("a data address:", a.__array_interface__['data'][0]) 
-b = a[1][0]
-print("b shape:", b.shape)
-print("b strides:", b.strides)
-print("b data address:", b.__array_interface__['data'][0])
+a = np.array([
+              # [[1.0, 2.0, 3.0],
+              #  [4.0, 5.0, 6.0]],
+
+              [[7.0, 8.0, 9.0],
+               [10.0, 11.0, 12.0]]])  # shape: (2, 2, 3)
+
+b = np.array([
+              # [[1.0, 4.0],
+              #  [2.0, 5.0],
+              #  [3.0, 6.0]],
+
+              [[7.0, 10.0],
+               [8.0, 11.0],
+               [9.0, 12.0]]])  # shape: (2, 3, 2)
+
+c = np.matmul(a, b)  # shape: (2, 2, 2)
+
+print("Output shape:", c.shape)
+print("Result:\n", c)
