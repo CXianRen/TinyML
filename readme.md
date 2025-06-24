@@ -123,8 +123,8 @@ np.tanh
 ]
 
 
-# boardcasting
+# broadcasting
 [](https://numpy.org/doc/stable/user/basics.broadcasting.html)
 
-1. scalar boardcast
+1. scalar broadcast
 2. 

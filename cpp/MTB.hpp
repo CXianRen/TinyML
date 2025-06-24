@@ -31,7 +31,7 @@ template <typename T>
 Tensor<T> transpose(Tensor<T>& tensor, std::vector<int> axes);
 
 template <typename T>
-Tensor<T> boardcast(const Tensor<T> &tensor, 
+Tensor<T> broadcast(const Tensor<T> &tensor, 
                  const std::vector<int> &shape);
 
             
@@ -40,7 +40,7 @@ class Tensor {
     public:
     friend Tensor<T> transpose<>(Tensor<T> &tensor, 
                 std::vector<int> axes);
-    friend Tensor<T> boardcast<>(const Tensor<T> &tensor, 
+    friend Tensor<T> broadcast<>(const Tensor<T> &tensor, 
                 const std::vector<int> &shape);
 
     // Constructor
@@ -344,28 +344,17 @@ class Tensor {
 };
 
 
-// auto boardcast function
+// auto broadcast function
 template <typename T>
-std::vector<int> compute_boardcast_shape(
-    const T &scalar, 
-    Tensor<T> &tensor) {
-    return tensor.shape();;
+std::vector<int> compute_broadcast_shape(
+    const T &scalar,
+    const std::vector<int> &shape) {
+    return shape; // scalar can be broadcasted to any shape
 }
 
-template <typename T>
-std::vector<int> compute_boardcast_shape(
-    const Tensor<T> &tensor,
-    const T &scalar) {
-    return compute_boardcast_shape<T>(scalar, tensor);
-}
-
-template <typename T>
-std::vector<int> compute_boardcast_shape(
-    const Tensor<T> &tensor1,
-    const Tensor<T> &tensor2) {
-    
-    auto shape1 = tensor1.shape();
-    auto shape2 = tensor2.shape();
+std::vector<int> compute_broadcast_shape(
+    const std::vector<int> &shape1,
+    const std::vector<int> &shape2) {
 
     auto max_size = std::max(shape1.size(), shape2.size());
     std::vector<int> result_shape(max_size, 1);
@@ -395,7 +384,7 @@ Tensor<T> scalar_to_tensor(T value) {
 }
 
 template <typename T>
-Tensor<T> boardcast(const Tensor<T> &tensor, 
+Tensor<T> broadcast(const Tensor<T> &tensor, 
                  const std::vector<int> &shape) {
     // Check if the tensor can be broadcasted to the new shape
     if (tensor.shape().size() > shape.size()) {
@@ -448,12 +437,12 @@ Tensor<T> boardcast(const Tensor<T> &tensor,
 }
 
 template <typename T>
-Tensor<T> boardcast(const T &scalar, 
+Tensor<T> broadcast(const T &scalar, 
                     const std::vector<int> &shape){
     // Convert scalar to tensor
     Tensor<T> tensor = scalar_to_tensor(scalar);
     // Broadcast the tensor to the new shape
-    return boardcast(tensor, shape);
+    return broadcast(tensor, shape);
 }
 
 // Create tensors
@@ -898,16 +887,19 @@ void _GEMM(const Tensor<T>& a, const Tensor<T>& b, T* data){
     // Initialize the result tensor
     for (int i = 0; i < M; ++i) {
         for (int j = 0; j < K; ++j) {
-            // data[i * K + j] = T(0); // Initialize to zero
+            double sum = 0.0;
             for (int k = 0; k < N; ++k) {
-                data[i * K + j] += 
-                    a_ptr[i * a_stride0 + k * a_stride1] * 
-                    b_ptr[k * b_stride0 + j * b_stride1];
+                // data[i * K + j] += 
+                //     a_ptr[i * a_stride0 + k * a_stride1] * 
+                //     b_ptr[k * b_stride0 + j * b_stride1];
+                sum += a_ptr[i * a_stride0 + k * a_stride1] * 
+                       b_ptr[k * b_stride0 + j * b_stride1];
             }
+            // store the result in the data pointer
+            data[i * K + j] = static_cast<T>(sum);
         }
     }
 }
-
 
 std::vector<std::vector<int>> generate_batch_indices(
         const std::vector<int>& shape) {
@@ -944,17 +936,25 @@ Tensor<T> matmul(const Tensor<T>& m1, const Tensor<T>& m2) {
     auto a_shape = a.shape();
     auto b_shape = b.shape();
 
-    // if the shapes are not equal, then try to broadcast them
-    if (a_shape.size() != b_shape.size()){
-        auto a_b_shape = compute_boardcast_shape(a, b);
-        // boardcast a and b to the same shape
-        a = boardcast(a, a_b_shape);
-        b = boardcast(b, a_b_shape);
-        a_shape = a.shape();
-        b_shape = b.shape();
+    // check and broadcast the shapes
+    auto max_shape = a_shape.size() > b_shape.size() ? a_shape : b_shape;
+    auto new_a_shape = max_shape;
+    auto new_b_shape = max_shape;
+    // copy the shapes to the new shapes from the back
+    for (int i = 0; i < a_shape.size(); i++){
+        new_a_shape[max_shape.size() - 1 - i] = 
+            a_shape[a_shape.size() - 1 - i];
     }
+    for (int i = 0; i < b_shape.size(); i++){
+        new_b_shape[max_shape.size() - 1 - i] = 
+            b_shape[b_shape.size() - 1 - i];
+    }
+    a = broadcast(a, new_a_shape);
+    b = broadcast(b, new_b_shape);
 
-    // check if the last 2 dimensions of a and b compatible for matrix multiplication
+
+    // check if the last 2 dimensions of a and b 
+    // compatible for matrix multiplication
     if (a_shape.size() < 2 || b_shape.size() < 2)
     {
         throw std::invalid_argument(
@@ -989,27 +989,19 @@ Tensor<T> matmul(const Tensor<T>& m1, const Tensor<T>& m2) {
     // generate indexes for batch dimensions
     auto batch_indices = generate_batch_indices(batch_shape);
 
-    // std::cout << "Batch indices size: " << batch_indices.size() << std::endl;
-    if(batch_indices.empty()) {
-        // if there are no batch dimensions, just do the matrix multiplication
-        _GEMM(a, b, result.data().get());
-    }else{
-        // if there is only one batch dimension, just do the matrix multiplication        
-        for (int i =0; i < batch_indices.size(); ++i) {
-            // create a view of the tensors for the current batch
-            auto indices = batch_indices[i];
-            // std::cout << "Batch indices: " << indices << std::endl;
-
-            // create a view of the tensors for the current batch
-            for (size_t j = 0; j < indices.size(); ++j) {
-                // create a view of the tensor for the current batch
-                a = m1[indices[j]];
-                b = m2[indices[j]];
-            }    
-            // perform matrix multiplication for the current batch
-            _GEMM(a, b, result.data().get() + 
-                i * M * K); // offset by batch size
+    // Always use the batch loop, even if batch_indices is empty (no batch dims)
+    for (int i = 0; i < std::max(1, static_cast<int>(batch_indices.size())); ++i) {
+        std::vector<int> indices;
+        if (!batch_indices.empty()) {
+            indices = batch_indices[i];
         }
+        auto sub_a = a;
+        auto sub_b = b;
+        for (size_t j = 0; j < indices.size(); ++j) {
+            sub_a = sub_a[indices[j]];
+            sub_b = sub_b[indices[j]];
+        }
+        _GEMM(sub_a, sub_b, result.data().get() + i * M * K);
     }
     return result;
 }
