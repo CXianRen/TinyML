@@ -67,3 +67,33 @@ python  test/test_matmul_ext.py \
   --n 1024 1024 \
   --path ${SAVE_PATH}
 echo " Finished case 4"
+
+
+echo " Starting case 5"
+python  test/test_matmul_ext.py \
+  --m 1 16 5 64 \
+  --n 1 16 64 5 \
+  --save_path ${SAVE_PATH} \
+  --dtype float32   
+
+./build/test/test_matmul_ext \
+  --m 1 16 5 64 \
+  --n 1 16 64 5 \
+  --path ${SAVE_PATH}
+echo " Finished case 5"
+
+echo " Starting case 6"
+python  test/test_matmul_ext.py \
+  --m 1 16 5 64 \
+  --n 1 16 5 64 \
+  --nt 0 1 3 2 \
+  --save_path ${SAVE_PATH} \
+  --dtype float32   
+
+./build/test/test_matmul_ext \
+  --m 1 16 5 64 \
+  --n 1 16 5 64 \
+  --nt 0 1 3 2 \
+  --path ${SAVE_PATH}
+echo " Finished case 6"
+

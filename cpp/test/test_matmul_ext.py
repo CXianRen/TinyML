@@ -6,7 +6,11 @@ import argparse
 parser = argparse.ArgumentParser(description='Test matmul_ext')
 parser.add_argument('--m', type=int, nargs='+', default=[2, 3],
                     help='List of integers for matrix m, e.g., --m 1 2 3')
-parser.add_argument('--n', type=int, nargs='+', default=[3, 4],
+parser.add_argument('--mt', type=int, nargs='+', default=[],
+                    help='List of integers for matrix m, e.g., --m 1 2 3')
+parser.add_argument('--n', type=int, nargs='+', default=[],
+                    help='List of integers for matrix n, e.g., --n 4 5 6')
+parser.add_argument('--nt', type=int, nargs='+', default=[],
                     help='List of integers for matrix n, e.g., --n 4 5 6')
 parser.add_argument('--dtype', type=str, default='float32',
                     help='Data type of the matrices')
@@ -17,6 +21,8 @@ def main():
     args = parser.parse_args()
     m = args.m
     n = args.n
+    mt = args.mt
+    nt = args.nt
     dtype = args.dtype
     # set seed for reproducibility
     np.random.seed(42)
@@ -26,7 +32,15 @@ def main():
     print(f"Matrix A shape: {a.shape}, dtype: {a.dtype}")
     print(f"Matrix B shape: {b.shape}, dtype: {b.dtype}")
     # perform dot product
-    c = np.dot(a, b)
+    an = a
+    bn = b
+    if mt != []:
+        print(f"Transposing matrix A with axes: {mt}")
+        an = np.transpose(an, axes=mt)
+    if nt != []:
+        print(f"Transposing matrix B with axes: {nt}")
+        bn = np.transpose(bn, axes=nt)
+    c = np.matmul(an, bn)
     # print("a :", a)
     # print("b :", b)
     # print("c :", c)

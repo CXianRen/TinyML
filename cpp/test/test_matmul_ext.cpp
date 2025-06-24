@@ -47,19 +47,6 @@ std::vector<FP_TYPE> load_data(const std::string& filename, int size) {
     return data; 
 }
 
-void dot(FP_TYPE* a, FP_TYPE* b, FP_TYPE* c, int m, int n, int k){
-    //[M x K] * [K x N] = [M x N]
-    for (int i = 0; i < m; ++i) {
-        for (int j = 0; j < n; ++j) {
-            c[i * n + j] = 0;
-            for (int l = 0; l < k; ++l) {
-                c[i * n + j] += a[i * k + l] * b[l * n + j];
-            }
-        }
-    }
-}
-
-
 
 int main(int argc, char** argv) {
     // parameters --m --n --path 
@@ -74,7 +61,9 @@ int main(int argc, char** argv) {
     }
 
     std::vector<int> shape_m;
+    std::vector<int> mt;
     std::vector<int> shape_n;
+    std::vector<int> nt;
     std::string data_file_path;
 
     // Helper lambda to parse shape arguments
@@ -92,8 +81,15 @@ int main(int argc, char** argv) {
         std::string arg = argv[i];
         if (arg == "--m") {
             parse_shape(i, shape_m);
-        } else if (arg == "--n") {
+        }
+        else if (arg == "--mt"){
+            parse_shape(i, mt);
+        } 
+        else if (arg == "--n") {
             parse_shape(i, shape_n);
+        }
+        else if (arg == "--nt"){
+            parse_shape(i, nt);
         } else if (arg == "--path") {
             if (++i < argc) {
                 data_file_path = argv[i];
@@ -114,11 +110,6 @@ int main(int argc, char** argv) {
     auto a_data = load_data(a_file, 0);
     auto b_data = load_data(b_file, 0);
     auto c_data = load_data(c_file, 0);
-
-    if(shape_m.size() == 2 && shape_n.size() == 2) {
-        dot(a_data.data(), b_data.data(), c_data.data(), 
-            shape_m[0], shape_n[1], shape_m[1]);
-    }
     
     TensorF a(shape_m, a_data);
     TensorF b(shape_n, b_data);
@@ -128,22 +119,36 @@ int main(int argc, char** argv) {
     std::cout << "b shape: " << shape_n << " strides: " 
               <<  b.strides() << std::endl;
     
+    if(mt.size() > 0){
+        std::cout << "transpose a: " << mt << std::endl;
+        a = mtb::transpose(a, mt);
+    }
+    if(nt.size() > 0){
+        std::cout << "transpose b: " << nt << std::endl;
+        b = mtb::transpose(b, nt);
+    }
+
     TensorF c=mtb::matmul(a, b);
 
     // check if c data matches
     if (c.size() != c_data.size()) {
         std::cerr << "Error: Output size mismatch. Expected "
-                  << c_data.size() << ", got " << c.size() << std::endl;
+                  << c_data.size() 
+                  << ", got " << c.size() << std::endl;
         return 1;
     }
 
     // check if c data matches
     auto c_ptr = c.data();
     double error_sum = 0.0;
+    double max_error = 0.0;
     for (size_t i = 0; i < c.size(); ++i) {
        // compute the average error
         double error = std::abs(c_ptr[i] - c_data[i]);
         error_sum += error;
+        if (error > max_error) {
+            max_error = error;
+        }
         if (error > 0.00001*std::abs(c_data[i])+ 1e-5) {
             std::cerr << "Error: Output data mismatch at index " 
                       << i << ": expected " << c_data[i] 
@@ -155,5 +160,6 @@ int main(int argc, char** argv) {
 
     double average_error = error_sum / c.size();
     std::cout << "Average error: " << average_error << std::endl;
+    std::cout << "Max error: " << max_error << std::endl;
     return 0;
 }
