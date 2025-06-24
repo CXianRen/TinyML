@@ -887,16 +887,11 @@ void _GEMM(const Tensor<T>& a, const Tensor<T>& b, T* data){
     // Initialize the result tensor
     for (int i = 0; i < M; ++i) {
         for (int j = 0; j < K; ++j) {
-            double sum = 0.0;
             for (int k = 0; k < N; ++k) {
-                // data[i * K + j] += 
-                //     a_ptr[i * a_stride0 + k * a_stride1] * 
-                //     b_ptr[k * b_stride0 + j * b_stride1];
-                sum += a_ptr[i * a_stride0 + k * a_stride1] * 
-                       b_ptr[k * b_stride0 + j * b_stride1];
+                data[i * K + j] += 
+                    a_ptr[i * a_stride0 + k * a_stride1] * 
+                    b_ptr[k * b_stride0 + j * b_stride1];
             }
-            // store the result in the data pointer
-            data[i * K + j] = static_cast<T>(sum);
         }
     }
 }

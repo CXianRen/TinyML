@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -std=c++17 -O2 -Wall -Wfatal-errors
+CXXFLAGS = -std=c++17 -O3 -Wall -Wfatal-errors
 
 TEST_SRC := $(wildcard test/test_*.cpp)
 TARGETS := $(patsubst %.cpp,build/%,${TEST_SRC})

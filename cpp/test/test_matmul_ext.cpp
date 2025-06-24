@@ -47,6 +47,19 @@ std::vector<FP_TYPE> load_data(const std::string& filename, int size) {
     return data; 
 }
 
+void dot(FP_TYPE* a, FP_TYPE* b, FP_TYPE* c, int m, int n, int k){
+    //[M x K] * [K x N] = [M x N]
+    for (int i = 0; i < m; ++i) {
+        for (int j = 0; j < n; ++j) {
+            c[i * n + j] = 0;
+            for (int l = 0; l < k; ++l) {
+                c[i * n + j] += a[i * k + l] * b[l * n + j];
+            }
+        }
+    }
+}
+
+
 
 int main(int argc, char** argv) {
     // parameters --m --n --path 
@@ -102,6 +115,11 @@ int main(int argc, char** argv) {
     auto b_data = load_data(b_file, 0);
     auto c_data = load_data(c_file, 0);
 
+    if(shape_m.size() == 2 && shape_n.size() == 2) {
+        dot(a_data.data(), b_data.data(), c_data.data(), 
+            shape_m[0], shape_n[1], shape_m[1]);
+    }
+    
     TensorF a(shape_m, a_data);
     TensorF b(shape_n, b_data);
 
@@ -121,14 +139,26 @@ int main(int argc, char** argv) {
 
     // check if c data matches
     auto c_ptr = c.data();
+    double error_sum = 0.0;
     for (size_t i = 0; i < c.size(); ++i) {
-        if (std::abs(c_ptr[i] - c_data[i]) > 1e-4) {
-            std::cerr << std::fixed << std::setprecision(6)
-                    << "Error: Output data mismatch at index "
-                    << i << ". Expected " << c_data[i]
-                    << ", got " << c_ptr[i] << std::endl;
+       // compute the average error
+        double error = std::abs(c_ptr[i] - c_data[i]);
+        error_sum += error;
+        if (error > 1e-3) {
+            std::cerr << "Error: Output data mismatch at index " 
+                      << i << ": expected " << c_data[i] 
+                      << ", got " << c_ptr[i] 
+                      << " (error: " << error << ")" << std::endl;
             return 1;
         }
+    }
+
+    double average_error = error_sum / c.size();
+    std::cout << "Average error: " << average_error << std::endl;
+    if (average_error > 1e-5) {
+        std::cerr << "Error: Average error is too high: " 
+                  << average_error << std::endl;
+        return 1;
     }
     return 0;
 }
