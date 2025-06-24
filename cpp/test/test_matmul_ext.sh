@@ -57,13 +57,13 @@ echo " Finished case 3"
 # case 4
 echo " Starting case 4"
 python  test/test_matmul_ext.py \
-  --m 1024 1024 \
+  --m 1 1024 1024 \
   --n 1024 1024 \
   --save_path ${SAVE_PATH} \
   --dtype float32   
 
 ./build/test/test_matmul_ext \
-  --m 1024 1024 \
+  --m 1 1024 1024 \
   --n 1024 1024 \
   --path ${SAVE_PATH}
 echo " Finished case 4"
