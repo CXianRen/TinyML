@@ -230,17 +230,17 @@ class Tensor {
     }
 
     // using (i) to access 1 dimension tensor
-    T& operator()(const int i) {
+    T& operator()(const int i) const {
         return data_.get()[i * strides_[0]];
     }
 
     // using (i, j) to access 2 dimension tensor
-    T& operator()(const int i, const int j) {
+    T& operator()(const int i, const int j) const {
         return data_.get()[i * strides_[0] + j * strides_[1]];
     }
 
     // using (i, j, k) to access 3 dimension tensor
-    T& operator()(const int i, const int&  j,const int k) {
+    T& operator()(const int i, const int&  j,const int k) const {
         return data_.get()[i * strides_[0] + 
                             j * strides_[1] + 
                             k * strides_[2]];
@@ -248,7 +248,7 @@ class Tensor {
 
     // using (i, j, k, l) to access 4 dimension tensor
     T& operator()(const int i, const int j, 
-                    const int k, const int l) {
+                    const int k, const int l) const {
         return data_.get()[i * strides_[0] + 
                             j * strides_[1] + 
                             k * strides_[2] + 
@@ -619,12 +619,6 @@ Tensor<T> concatenate_dim0(const std::vector<Tensor<T>> &tensors) {
     // copy the data from each tensor into the result tensor
     int offset = 0;
     for (const auto &tensor : tensors) {
-        if (tensor.size() != tensor.shape()[0] * tensor.shape()[1]) {
-            throw std::invalid_argument(
-                "Tensor size does not match its shape,"\
-                " expected size: " + std::to_string(tensor.shape()[0] * tensor.shape()[1]) +
-                ", actual size: " + std::to_string(tensor.size()));
-        }
         auto s_ptr = tensor.data().get();
         auto d_ptr = result.data().get();
         if(tensor.is_contiguous()){
