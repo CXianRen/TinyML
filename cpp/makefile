@@ -17,6 +17,4 @@ $(SUBDIRS):
 
 # clean all modules
 clean:
-	for dir in $(SUBDIRS); do \
-		$(MAKE) -C $$dir clean; \
-	done
+	rm -rf $(BUILD_DIR)

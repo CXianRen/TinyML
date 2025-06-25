@@ -87,25 +87,33 @@ import numpy as np
 # print("b strides:", b.strides)
 # print("b data address:", b.__array_interface__['data'][0])
 
-import numpy as np
+# import numpy as np
 
-a = np.array([
-              # [[1.0, 2.0, 3.0],
-              #  [4.0, 5.0, 6.0]],
+# a = np.array([
+#               # [[1.0, 2.0, 3.0],
+#               #  [4.0, 5.0, 6.0]],
 
-              [[7.0, 8.0, 9.0],
-               [10.0, 11.0, 12.0]]])  # shape: (2, 2, 3)
+#               [[7.0, 8.0, 9.0],
+#                [10.0, 11.0, 12.0]]])  # shape: (2, 2, 3)
 
-b = np.array([
-              # [[1.0, 4.0],
-              #  [2.0, 5.0],
-              #  [3.0, 6.0]],
+# b = np.array([
+#               # [[1.0, 4.0],
+#               #  [2.0, 5.0],
+#               #  [3.0, 6.0]],
 
-              [[7.0, 10.0],
-               [8.0, 11.0],
-               [9.0, 12.0]]])  # shape: (2, 3, 2)
+#               [[7.0, 10.0],
+#                [8.0, 11.0],
+#                [9.0, 12.0]]])  # shape: (2, 3, 2)
 
-c = np.matmul(a, b)  # shape: (2, 2, 2)
+# c = np.matmul(a, b)  # shape: (2, 2, 2)
 
-print("Output shape:", c.shape)
-print("Result:\n", c)
+# print("Output shape:", c.shape)
+# print("Result:\n", c)
+
+
+a=np.random.rand(768)
+b=np.random.rand(1, 2, 768)
+c = a + b
+print("a shape:", a.shape)
+print("b shape:", b.shape)
+print("c shape:", c.shape)

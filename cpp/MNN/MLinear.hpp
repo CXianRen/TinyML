@@ -2,7 +2,7 @@
 #define __MLinear_HPP__
 #include "MTB.hpp"
 
-namespace MNN {
+namespace mnn {
 
 template <typename T>
 class MLinear {
@@ -10,21 +10,16 @@ class MLinear {
         MLinear(int in_features, int out_features, bool bias = true):
             in_features_(in_features),
             out_features_(out_features),
-            has_bias_(bias) {
-            // Initialize weight tensor with random values
-            weight_ = MTB::Tensor<T>({out_features_, in_features_}); 
-            if (has_bias_) {
-                // Initialize bias tensor with random values
-                bias_ = MTB::Tensor<T>(
-                    {out_features_});
-            }
+            has_bias_(bias),
+            weight_({out_features_, in_features_}),
+            bias_(has_bias_ ? mtb::Tensor<T>({out_features_}) : mtb::Tensor<T>({1})){
         }
 
         // Forward pass method
-        MTB::Tensor<T> forward(const MTB::Tensor<T>& input) {
+        mtb::Tensor<T> forward(const mtb::Tensor<T>& input) {
             // Perform matrix multiplication
-            MTB::Tensor<T> output = 
-                input.matmul(weight_.transpose(1, 0));
+            mtb::Tensor<T> output = 
+                mtb::matmul(input, mtb::transpose(weight_, {1, 0}));
 
             // Add bias if it exists
             if (has_bias_) {
@@ -40,7 +35,7 @@ class MLinear {
                 throw std::runtime_error(
                     "Size mismatch for weight tensor.");
             }
-            memcpy(weight_.data(), data, 
+            memcpy(weight_.data().get(), data, 
                    weight_.size() * sizeof(T));
         }
 
@@ -54,7 +49,7 @@ class MLinear {
                 throw std::runtime_error(
                     "Size mismatch for bias tensor.");
             }
-            memcpy(bias_.data(), data, 
+            memcpy(bias_.data().get(), data, 
                    bias_.size() * sizeof(T));
         }
         
@@ -64,10 +59,10 @@ class MLinear {
         int out_features_;
 
         // Weight and bias tensors
-        MTB::Tensor<T> weight_;
-        MTB::Tensor<T> bias_;
+        mtb::Tensor<T> weight_;
+        mtb::Tensor<T> bias_;
 };
 
-} // namespace MNN
+} // namespace mnn
 
 #endif // __MLinear_HPP__

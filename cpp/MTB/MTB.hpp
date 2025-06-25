@@ -8,6 +8,7 @@
 #include <cmath>
 #include <iostream>
 #include <sstream>
+#include <numeric>
 
 template <typename T>
 std::ostream& operator<<(std::ostream& os, const std::vector<T>& vec) {
@@ -29,6 +30,10 @@ class Tensor;
 
 template <typename T>
 Tensor<T> transpose(Tensor<T>& tensor, std::vector<int> axes);
+
+std::vector<int> compute_broadcast_shape(
+    const std::vector<int> &shape1,
+    const std::vector<int> &shape2);
 
 template <typename T>
 Tensor<T> broadcast(const Tensor<T> &tensor, 
@@ -226,34 +231,28 @@ class Tensor {
 
     // using (i) to access 1 dimension tensor
     T& operator()(const int i) {
-        // if (i < 0 || i >= shape_[0]) {
-        //     throw std::out_of_range("Index out of range");
-        // }
         return data_.get()[i * strides_[0]];
     }
 
     // using (i, j) to access 2 dimension tensor
     T& operator()(const int i, const int j) {
-        // if (i < 0 || i >= shape_[0] || j < 0 || j >= shape_[1]) {
-        //     throw std::out_of_range("Index out of range");
-        // }
         return data_.get()[i * strides_[0] + j * strides_[1]];
     }
 
     // using (i, j, k) to access 3 dimension tensor
     T& operator()(const int i, const int&  j,const int k) {
-        // if (i < 0 || i >= shape_[0] || j < 0 || j >= shape_[1] || k < 0 || k >= shape_[2]) {
-        //     throw std::out_of_range("Index out of range");
-        // }
-        return data_.get()[i * strides_[0] + j * strides_[1] + k * strides_[2]];
+        return data_.get()[i * strides_[0] + 
+                            j * strides_[1] + 
+                            k * strides_[2]];
     }
+
     // using (i, j, k, l) to access 4 dimension tensor
     T& operator()(const int i, const int j, 
                     const int k, const int l) {
-        // if (i < 0 || i >= shape_[0] || j < 0 || j >= shape_[1] || k < 0 || k >= shape_[2] || l < 0 || l >= shape_[3]) {
-        //     throw std::out_of_range("Index out of range");
-        // }
-        return data_.get()[i * strides_[0] + j * strides_[1] + k * strides_[2] + l * strides_[3]];
+        return data_.get()[i * strides_[0] + 
+                            j * strides_[1] + 
+                            k * strides_[2] + 
+                            l * strides_[3]];
     }
     
     // math operations
@@ -293,12 +292,62 @@ class Tensor {
     // inplace operations
     template <typename Op>
     Tensor& inplaceElementwiseOp(const Tensor &other, Op op, const char* opname) {
+        // shallow copy
+        auto a = *this; 
+        auto b = other;
+
         if (shape_ != other.shape_) {
+            // try to broadcast the shapes
+            auto new_shape = compute_broadcast_shape(shape_, other.shape_);
+            a = broadcast(a, new_shape);
+            b = broadcast(b, new_shape);
+        }
+
+        if (a.shape_ != b.shape_) {
             throw std::invalid_argument(std::string("Shapes must match for ") + opname);
         }
-        for (int i = 0; i < size_; ++i) {
-            data_.get()[i] = op(data_.get()[i], other.data_.get()[i]);
+
+        // a general version for all cases
+        const int ndim = a.shape_.size();
+        const int total = std::accumulate(
+            a.shape_.begin(), a.shape_.end(), 1, 
+            std::multiplies<>());
+
+        // Compute strides for iteration
+        const auto& a_shape = a.shape_;
+        const auto& b_shape = b.shape_;
+        const auto& a_strides = a.strides_;
+        const auto& b_strides = b.strides_;
+
+        auto* a_ptr = a.data_.get();
+        auto* b_ptr = b.data_.get();
+
+        // Iterate using flat index + unravel
+        std::vector<size_t> indices(ndim, 0);
+
+        for (size_t idx = 0; idx < total; ++idx) {
+            // Compute flat index with broadcasting
+            size_t a_offset = 0;
+            size_t b_offset = 0;
+            for (size_t d = 0; d < ndim; ++d) {
+                a_offset += (a_shape[d] == 1 ? 0 : indices[d]) * a_strides[d];
+                b_offset += (b_shape[d] == 1 ? 0 : indices[d]) * b_strides[d];
+            }
+
+            a_ptr[a_offset] = op(a_ptr[a_offset], b_ptr[b_offset]);
+
+            // Advance multi-dimensional index
+            for (ssize_t d = ndim - 1; d >= 0; --d) {
+                indices[d]++;
+                if (indices[d] < a_shape[d]) {
+                    break;
+                }
+                indices[d] = 0;
+            }
         }
+
+        // shallow copy to this tensor (update the view)
+        *this = a; 
         return *this;
     }
 
