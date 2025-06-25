@@ -1,3 +1,0 @@
-[B,S,E][E,E]
-[B,HN,S,HD][B,HN,HD,S]
-[B,HN,1,HD][B,HN,HD,S+1]

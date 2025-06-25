@@ -7,7 +7,7 @@ typedef Tensor<float> TensorF;
 
 // test constructor
 void test_constructor() {
-  std::cout << "Testing constructor..." << std::endl;
+  START_TEST();
   TensorF t1({10});        // 1D tensor
   TensorF t2({2, 3});      // 2D tensor
   TensorF t3({2, 3, 4});   // 3D tensor
@@ -128,12 +128,11 @@ void test_constructor() {
   if (!t4.strides().empty()) {
     throw std::runtime_error("Error: t4 strides should be empty after move!");
   }
-
-  std::cout << "All constructor tests passed!" << std::endl;
+  PASSLOG();
 }
 
 void test_is_contiguous() {
-  std::cout << "Testing is_contiguous..." << std::endl;
+  START_TEST();
   TensorF t1({2, 3}); // contiguous
   std::cout << "t1 shape: " << t1.shape() << std::endl;
   std::cout << "t1 strides: " << t1.strides() << std::endl;
@@ -146,12 +145,12 @@ void test_is_contiguous() {
   if (t2.is_contiguous()) {
     throw std::runtime_error("Error: t2 should not be contiguous!");
   }
-  std::cout << "[Passed] is_contiguous test!" << std::endl;
+  PASSLOG();
 }
 
 // test deep copy
 void test_deep_copy() {
-  std::cout << "Testing deep copy..." << std::endl;
+  START_TEST();
   TensorF t1({2, 3});
   TensorF t2 = t1.copy(); // deep copy
   std::cout << "t1 shape: " << t1.shape() << std::endl;
@@ -175,12 +174,12 @@ void test_deep_copy() {
         throw std::runtime_error("Error: t2 data does not match t1 data at index " + std::to_string(i) + "!");
     }
   }
-  std::cout << "All deep copy tests passed!" << std::endl;
+  PASSLOG();
 }
 
 // test reshape
 void test_reshape() {
-  std::cout << "Testing reshape..." << std::endl;
+  START_TEST();
   TensorF t1({2, 3});
   TensorF t2 = t1.reshape({3, 2}); // reshape
   std::cout << "t1 shape: " << t1.shape() << std::endl;
@@ -192,12 +191,12 @@ void test_reshape() {
   if (!compare_vectors(t2.strides(), std::vector<int>{2, 1})) {
     throw std::runtime_error("Error: t2 strides do not match expected strides after reshape!");
   }
-  std::cout << "All reshape tests passed!" << std::endl;
+  PASSLOG();
 }
 
 // test () operator
 void test_operator() {
-  std::cout << "Testing () operator..." << std::endl;
+  START_TEST();
   
   // 1 D tensor
   TensorF t1({5});
@@ -267,7 +266,7 @@ void test_operator() {
       }
     }
   }
-  std::cout << "All () operator tests passed!" << std::endl;
+  PASSLOG();
 } 
 
 

@@ -1,23 +1,22 @@
-CXX = g++
-CXXFLAGS = -std=c++17 -O3 -Wall -Wfatal-errors
+SUBDIRS := MNN MTB
 
-TEST_SRC := $(wildcard test/test_*.cpp)
-TARGETS := $(patsubst %.cpp,build/%,${TEST_SRC})
+.PHONY: all clean $(SUBDIRS) $(addsuffix _test, $(SUBDIRS))
 
-INCLUDE_DIRS := -I.
-TEST_INCLUDE_DIRS := -I./test
+all: $(SUBDIRS)
 
-all: $(TARGETS)
+BUILD_DIR := build
 
-build/test/%: test/%.cpp MTB.hpp | build/test
-	$(CXX) $(CXXFLAGS) \
-	$(INCLUDE_DIRS) \
-	$(TEST_INCLUDE_DIRS) $< -o $@
+# compile a specific module
+$(SUBDIRS):
+	echo "Compiling $@..."
+	$(MAKE) -C $@ BUILD_DIR=$(BUILD_DIR)
 
-build/test:
-	@mkdir -p build/test
+# compile the test of a specific module
+%_test:
+	$(MAKE) -C $* test BUILD_DIR=$(BUILD_DIR)
 
+# clean all modules
 clean:
-	rm -rf build
-
-.PHONY: all clean build/test
+	for dir in $(SUBDIRS); do \
+		$(MAKE) -C $$dir clean; \
+	done

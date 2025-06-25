@@ -8,8 +8,6 @@ typedef Tensor<float> TensorF;
 // Template test for binary operators (+, -, *, /)
 template <typename Op, typename OpFunc>
 void test_op_template(const std::string& op_name, OpFunc op_func) {
-  std::cout << "Testing operator " << op_name << " ..." << std::endl;
-
   auto fill_and_check = [&](const std::vector<int>& shape) {
     TensorF t1(shape);
     TensorF t2(shape);
