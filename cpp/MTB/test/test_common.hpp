@@ -1,6 +1,6 @@
 #ifndef __TEST_COMMON_HPP__
 #define __TEST_COMMON_HPP__
-#include "MTB.hpp"
+#include "mtb.hpp"
 #include <assert.h>
 // compare two vectors for equality
 template <typename T>

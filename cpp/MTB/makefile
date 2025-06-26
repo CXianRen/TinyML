@@ -23,11 +23,14 @@ TEST_TARGETS := $(patsubst \
 
 INCLUDE_DIRS := -I$(SRC_DIR) -I$(TEST_DIR)
 
+INCLUDE_FILES := $(wildcard $(SRC_DIR)/*.hpp)
+
+
 all: test
 
 test: $(TEST_TARGETS)
 
-$(MODULE_TEST_BUILD_DIR)/%: $(TEST_DIR)/%.cpp | $(MODULE_TEST_BUILD_DIR)
+$(MODULE_TEST_BUILD_DIR)/%: $(TEST_DIR)/%.cpp $(INCLUDE_FILES) | $(MODULE_TEST_BUILD_DIR)
 	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) $< -o $@
 
 $(MODULE_TEST_BUILD_DIR):

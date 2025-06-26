@@ -1,5 +1,4 @@
 #include "test_common.hpp"
-
 #include <iostream>
 using namespace mtb;
 
