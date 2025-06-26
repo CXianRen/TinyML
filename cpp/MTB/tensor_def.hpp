@@ -1,6 +1,8 @@
 #pragma once
 
 #include <vector>
+#include <utility>
+
 namespace mtb {
 
 template <typename T>
@@ -49,6 +51,8 @@ class Tensor {
     // reshape
     Tensor& reshape(const std::vector<size_t> &new_shape);
 
+    Tensor slice(
+        const std::vector<std::pair<size_t, size_t>>& ranges) const;
 
     /* Op */
     // using [] to access a innner dimension tensor

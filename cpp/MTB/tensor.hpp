@@ -176,6 +176,71 @@ namespace mtb {
         return *this;
     }
 
+    template <typename T>
+    Tensor<T> Tensor<T>::slice(
+        const std::vector<std::pair<size_t, size_t>>& ranges) const{
+        // Check if the ranges are valid
+        if (ranges.empty()) {
+            throw std::invalid_argument(
+                "Ranges cannot be empty"); 
+        }
+
+        if (ranges.size() > shape_.size()) {
+            throw std::invalid_argument(
+                "Too many ranges for the tensor dimensions");
+        }
+        // Create a new shape based on the ranges
+        std::vector<size_t> new_shape;
+        for (size_t i = 0; i < ranges.size(); ++i) {
+            if (ranges[i].first >= shape_[i] ||
+                ranges[i].second > shape_[i] ||
+                ranges[i].first >= ranges[i].second) {
+                throw std::out_of_range(
+                    "Range out of bounds for dimension " +
+                    std::to_string(i)); 
+            }
+            auto dim_size = ranges[i].second - ranges[i].first;
+            // if (dim_size == 1) {
+            //     // If the size is 1, we can skip this dimension
+            //     continue;
+            // }
+            new_shape.push_back(dim_size);
+        }
+
+        // shallow copy the data pointer
+        Tensor<T> result = *this; // shallow copy
+        result.shape_ = new_shape;
+        
+        // update the data pointer to point to the correct location
+        size_t offset = 0;
+        for (size_t i = 0; i < ranges.size(); ++i) {
+            offset += ranges[i].first * strides_[i];
+        }
+        
+        result.data_ = std::shared_ptr<T[]>(data_,
+            data_.get() + offset);
+
+        // if the shape is 1, we can skip this dimension
+        std::vector<size_t> new_strides;
+        size_t new_size = 1;
+        new_shape.clear();
+        for (size_t i = 0; i < result.shape_.size(); ++i) {
+            auto dim_size = result.shape_[i];
+            new_size *= dim_size;
+            if (result.shape_[i] == 1) {
+                // Skip this dimension
+                continue;
+            }
+            new_strides.push_back(result.strides_[i]);
+            new_shape.push_back(result.shape_[i]);
+        }
+        // Update the size of the result tensor
+        result.size_ = new_size;
+        result.strides_ = new_strides;
+        result.shape_ = new_shape;
+        
+        return result;
+    }
 
     /* Op */
     // using [] to access a innner dimension tensor

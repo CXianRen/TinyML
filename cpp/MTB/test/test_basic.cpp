@@ -308,6 +308,45 @@ void test_bracket_operator() {
   PASSLOG();
 }
 
+
+// test slice
+void test_slice() {
+  START_TEST();
+  {
+    TensorF t1 = mtb::random<float>({10,10}); // create a random tensor
+    auto t2 = t1.slice({{0, 5}, {0, 5}}); // slice the first 5x5 block
+    std::cout << "t1 shape: " << t1.shape() << std::endl;
+    assert(t1.shape() == (std::vector<size_t>{10, 10}));
+    std::cout << "t1 strides: " << t1.strides() << std::endl;
+    std::cout << "t2 shape: " << t2.shape() << std::endl;
+    assert(t2.shape() == (std::vector<size_t>{5, 5}));
+    std::cout << "t2 strides: " << t2.strides() << std::endl;
+    assert(t2.strides() == (std::vector<size_t>{10, 1}));
+
+    auto t3 = t1.slice({{5, 10}, {5, 10}}); // slice the second 5x5 block
+    std::cout << "t3 shape: " << t3.shape() << std::endl;
+    assert(t3.shape() == (std::vector<size_t>{5, 5}));
+    std::cout << "t3 strides: " << t3.strides() << std::endl;
+    assert(t3.strides() == (std::vector<size_t>{10, 1}));
+
+    std::cout << "t1 data pointer: " << t1.data().get() << std::endl;
+    std::cout << "t2 data pointer: " << t2.data().get() << std::endl;
+    std::cout << "t3 data pointer: " << t3.data().get() << std::endl;
+    assert(t2.data().get() == t1.data().get()); // check if data pointers are the same
+    assert(t3.data().get() == t1.data().get() +  55); // check if data pointers are offset correctly 
+  }
+  {
+    TensorF t1 = mtb::random<float>({2,5,16,64}); // create a random 4D tensor
+    auto t2 = t1.slice({{0, 2}, {0, 1}, {0, 16}, {0, 64}}); // slice the whole
+    std::cout << "t1 shape: " << t1.shape() << std::endl;
+    assert(t1.shape() == (std::vector<size_t>{2, 5, 16, 64}));
+    std::cout << "t1 strides: " << t1.strides() << std::endl;
+    std::cout << "t2 shape: " << t2.shape() << std::endl;
+    // assert(t2.shape() == (std::vector<size_t>{2, 5, 16, 64}));
+  }
+ 
+}
+
 int main(int argc, char** argv) {
   test_constructor();
   test_deep_copy();
@@ -315,5 +354,6 @@ int main(int argc, char** argv) {
   test_is_contiguous();
   test_operator();
   test_bracket_operator();
+  test_slice();
   return 0;
 }

@@ -111,9 +111,24 @@ import numpy as np
 # print("Result:\n", c)
 
 
-a=np.random.rand(768)
-b=np.random.rand(1, 2, 768)
-c = a + b
+# a=np.random.rand(768)
+# b=np.random.rand(1, 2, 768)
+# c = a + b
+# print("a shape:", a.shape)
+# print("b shape:", b.shape)
+# print("c shape:", c.shape)
+
+
+
+# 
+a = np.random.rand(1, 1, 128, 128)
+b = a[:, :, 5:10, 5:10]
 print("a shape:", a.shape)
 print("b shape:", b.shape)
-print("c shape:", c.shape)
+print("a strides:", a.strides)
+print("b strides:", b.strides)
+print("share data:", np.shares_memory(a, b))
+print("a C contiguous:", a.flags['C_CONTIGUOUS'])
+print("a F contiguous:", a.flags['F_CONTIGUOUS'])
+print("b C contiguous:", b.flags['C_CONTIGUOUS'])
+print("b F contiguous:", b.flags['F_CONTIGUOUS'])

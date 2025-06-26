@@ -128,3 +128,10 @@ np.tanh
 
 1. scalar broadcast
 2. 
+
+
+
+
+b = a[[1,2,7]] // copy
+b = a[1:3, 1:3] // share
+b = b = a[1:2:6, 1:2:3] // share
