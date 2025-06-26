@@ -1,6 +1,6 @@
 #ifndef __MLinear_HPP__
 #define __MLinear_HPP__
-#include "MTB.hpp"
+#include "mtb.hpp"
 
 namespace mnn {
 

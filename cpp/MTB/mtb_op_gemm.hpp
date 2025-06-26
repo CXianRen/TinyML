@@ -56,7 +56,7 @@ std::vector<std::vector<int>> generate_batch_indices(
             break; // all indices have been generated
         }
     }
-    return std::move(result);
+    return result;
 }
 
 // matmul function

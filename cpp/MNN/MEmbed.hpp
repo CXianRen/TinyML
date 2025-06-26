@@ -1,6 +1,6 @@
 #ifndef __MEmbed_HPP__
 #define __MEmbed_HPP__
-#include "MTB.hpp"
+#include "mtb.hpp"
 
 namespace mnn {
 

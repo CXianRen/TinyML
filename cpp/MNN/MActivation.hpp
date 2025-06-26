@@ -1,6 +1,6 @@
 #ifndef __MActivation_HPP__
 #define __MActivation_HPP__
-#include "MTB.hpp"
+#include "mtb.hpp"
 
 namespace mnn {
 

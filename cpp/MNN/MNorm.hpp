@@ -1,6 +1,6 @@
 #ifndef __MNorm_HPP__
 #define __MNorm_HPP__
-#include "MTB.hpp"
+#include "mtb.hpp"
 
 namespace mnn {
 

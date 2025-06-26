@@ -1,5 +1,4 @@
 #include "MSelfAT.hpp"
-#include "MTB.hpp"
 #include "test_common.hpp"
 
 using namespace mnn;

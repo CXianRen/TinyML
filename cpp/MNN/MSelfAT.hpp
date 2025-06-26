@@ -1,6 +1,6 @@
 #ifndef __MSelfAT_HPP__
 #define __MSelfAT_HPP__
-#include "MTB.hpp"
+#include "mtb.hpp"
 
 #include "MLinear.hpp"
 
