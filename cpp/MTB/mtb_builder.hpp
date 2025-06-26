@@ -42,25 +42,26 @@ Tensor<T> random(std::vector<size_t> shape,
 template <typename T>
 Tensor<T> triu(const Tensor<T> &tensor, int k = 0) {
     if (tensor.shape().size() != 2) {
-        throw std::invalid_argument("Tensor must be 2D for triu operation");
+        throw std::invalid_argument(
+            "Tensor must be 2D for triu operation");
     }
     Tensor<T> result(tensor.shape());
 
-    auto s_ptr = tensor.data().get();
-    auto d_ptr = result.data().get();
+    const auto* s_ptr = tensor.data().get();
+    auto* d_ptr = result.data().get();
 
-    size_t M = tensor.shape()[0];
-    size_t N = tensor.shape()[1];
+    const size_t M = tensor.shape()[0];
+    const size_t N = tensor.shape()[1];
 
-    size_t s0 = tensor.strides()[0];
-    size_t s1 = tensor.strides()[1];
-    size_t r0 = result.strides()[0];
-    size_t r1 = result.strides()[1];
+    const size_t s0 = tensor.strides()[0];
+    const size_t s1 = tensor.strides()[1];
+    const size_t r0 = result.strides()[0];
+    const size_t r1 = result.strides()[1];
 
     for (size_t i = 0; i < M; ++i) {
+        const int diagonal = static_cast<int>(i) + k;
         for (size_t j = 0; j < N; ++j) {
-            // if k is positive
-            if (j >= static_cast<int>(i) + k) {
+            if (static_cast<int>(j) >= diagonal) {
                 d_ptr[i * r0 + j * r1] = s_ptr[i * s0 + j * s1];
             } else {
                 d_ptr[i * r0 + j * r1] = T(0);

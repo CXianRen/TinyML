@@ -70,16 +70,16 @@ namespace mtb {
     Tensor<T>::Tensor(const Tensor &other)
         :shape_(other.shape_), 
         strides_(other.strides_), 
-        size_(other.size_),
-        data_(other.data_) {}
+        data_(other.data_),
+        size_(other.size_){}
 
     // Move constructor
     template <typename T>
     Tensor<T>::Tensor(Tensor &&other) noexcept
         :shape_(std::move(other.shape_)), 
         strides_(std::move(other.strides_)), 
-        size_(other.size_),
-        data_(std::move(other.data_)) {
+        data_(std::move(other.data_)),
+        size_(other.size_) {
         other.data_ = nullptr; 
         other.size_ = 0;
         other.strides_.clear();

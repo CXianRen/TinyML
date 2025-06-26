@@ -128,7 +128,7 @@ class Tensor {
     // smart posize_ter to data
     std::shared_ptr<T[]> data_ = nullptr;
 
-    size_t size_ = 0;    
+    size_t size_ = 0;  
 };
 
 } // namespace mtb

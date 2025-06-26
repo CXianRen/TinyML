@@ -106,7 +106,7 @@ Tensor<T> matmul(const Tensor<T>& m1, const Tensor<T>& m2) {
     // compute the shape of the result tensor
     // [x,x, M, N] @ [x,x, N, K] = [x,x, M, K]
     size_t M = a_shape[a_shape.size() - 2];
-    size_t N = a_shape[a_shape.size() - 1];
+    // size_t N = a_shape[a_shape.size() - 1];
     size_t K = b_shape[b_shape.size() - 1];
 
     std::vector<size_t> result_shape = a_shape;
