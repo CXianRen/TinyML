@@ -15,21 +15,22 @@
 namespace mtb {        
     // Constructor
     template <typename T>
-    Tensor<T>::Tensor(const std::vector<int> &shape)
-        :shape_(shape){
+    Tensor<T>::Tensor(const std::vector<size_t> &shape)
+    {
+        shape_ = shape;
         if (shape.empty()) {
             throw std::invalid_argument("Shape cannot be empty");
         }
         // Calculate strides based on the shape
         strides_.resize(shape.size());
-        int stride = 1;
-        for (int i = shape.size() - 1; i >= 0; --i) {
+        size_t stride = 1;
+        for (int i = static_cast<int>(shape.size()) - 1; i >= 0; --i) {
             strides_[i] = stride;
             stride *= shape[i];
         }
         // Initialize data with the total size based on the shape
-        int total_size = 1;
-        for (int dim : shape) {
+        size_t total_size = 1;
+        for (size_t dim : shape) {
             if (dim <= 0) {
                 throw std::invalid_argument("Shape dimensions must be positive");
             }
@@ -42,7 +43,7 @@ namespace mtb {
     }
 
     template <typename T>
-    Tensor<T>::Tensor(const std::vector<int> &shape, 
+    Tensor<T>::Tensor(const std::vector<size_t> &shape, 
                 const std::vector<T> &data)
         :Tensor(shape) {
         if (data.size() != size_) {
@@ -118,7 +119,7 @@ namespace mtb {
     bool Tensor<T>::is_contiguous() const {
         // Check if the tensor is contiguous in memory
         if (shape_.empty()) return true; // Empty tensor is considered contiguous
-        int expected_stride = 1;
+        size_t expected_stride = 1;
         for (int i = static_cast<int>(shape_.size()) - 1; i >= 0; --i) {
             if (strides_[i] != expected_stride) {
                 std::cout << "Tensor is not contiguous: " 
@@ -145,13 +146,13 @@ namespace mtb {
 
     // reshape
     template <typename T>
-    Tensor<T>& Tensor<T>::reshape(const std::vector<int> &new_shape) {
+    Tensor<T>& Tensor<T>::reshape(const std::vector<size_t> &new_shape) {
         if (new_shape.empty()) {
             throw std::invalid_argument(
                 "New shape cannot be empty");
         }
-        int new_size = 1;
-        for (int dim : new_shape) {
+        size_t new_size = 1;
+        for (size_t dim : new_shape) {
             if (dim <= 0) {
                 throw std::invalid_argument(
                     "Shape dimensions must be positive");
@@ -166,8 +167,8 @@ namespace mtb {
         shape_ = new_shape;
         // Update strides based on the new shape
         strides_.resize(new_shape.size());
-        int stride = 1;
-        for (int i = new_shape.size() - 1; i >= 0; --i) {
+        size_t stride = 1;
+        for (int i = static_cast<int>(new_shape.size()) - 1; i >= 0; --i) {
             strides_[i] = stride;
             stride *= new_shape[i];
         }
@@ -179,7 +180,7 @@ namespace mtb {
     /* Op */
     // using [] to access a innner dimension tensor
     template <typename T>
-    Tensor<T> Tensor<T>::operator[](const int i) const {
+    Tensor<T> Tensor<T>::operator[](const size_t i) const {
         if (i < 0 || i >= shape_[0]) {
             throw std::out_of_range("Index out of range");
         }
@@ -188,7 +189,7 @@ namespace mtb {
         
         // update the shape and strides of the result tensor
         result.shape_.erase(result.shape_.begin());
-        int stride = result.strides_[0];
+        size_t stride = result.strides_[0];
         result.strides_.erase(result.strides_.begin());
 
         // update the data pointer to point to the correct location
@@ -196,8 +197,8 @@ namespace mtb {
             data_, data_.get() + i * stride);
         
         // update the size of the result tensor
-        int new_size = 1;
-        for (int dim : result.shape_) {
+        size_t new_size = 1;
+        for (size_t dim : result.shape_) {
             new_size *= dim;
         }
         result.size_ = new_size;
@@ -207,20 +208,20 @@ namespace mtb {
 
     // using (i) to access 1 dimension tensor
     template <typename T>
-    T& Tensor<T>::operator()(const int i) const {
+    T& Tensor<T>::operator()(const size_t i) const {
         return data_.get()[i * strides_[0]];
     }
 
     // using (i, j) to access 2 dimension tensor
     template <typename T>
-    T& Tensor<T>::operator()(const int i, const int j) const {
+    T& Tensor<T>::operator()(const size_t i, const size_t j) const {
         return data_.get()[i * strides_[0] + j * strides_[1]];
     }
 
     // using (i, j, k) to access 3 dimension tensor
     template <typename T>
     T& Tensor<T>::operator()(
-        const int i, const int&  j,const int k) const {
+        const size_t i, const size_t&  j,const size_t k) const {
         return data_.get()[i * strides_[0] + 
                             j * strides_[1] + 
                             k * strides_[2]];
@@ -228,8 +229,8 @@ namespace mtb {
 
     // using (i, j, k, l) to access 4 dimension tensor
     template <typename T>
-    T& Tensor<T>::operator()(const int i, const int j, 
-                    const int k, const int l) const {
+    T& Tensor<T>::operator()(const size_t i, const size_t j, 
+                    const size_t k, const size_t l) const {
         return data_.get()[i * strides_[0] + 
                             j * strides_[1] + 
                             k * strides_[2] + 
@@ -247,7 +248,7 @@ namespace mtb {
                 std::string("Shapes must match for ") + opname);
         }
         Tensor result(shape_);
-        for (int i = 0; i < size_; ++i) {
+        for (size_t i = 0; i < size_; ++i) {
             result.data_.get()[i] = 
                 op(data_.get()[i], other.data_.get()[i]);
         }
@@ -299,8 +300,8 @@ namespace mtb {
         }
 
         // a general version for all cases
-        const int ndim = a.shape_.size();
-        const int total = std::accumulate(
+        const size_t ndim = a.shape_.size();
+        const size_t total = std::accumulate(
             a.shape_.begin(), a.shape_.end(), 1, 
             std::multiplies<>());
 

@@ -5,21 +5,21 @@ namespace mtb {
 
 // auto broadcast function
 template <typename T>
-std::vector<int> compute_broadcast_shape(
+std::vector<size_t> compute_broadcast_shape(
     const T &scalar,
-    const std::vector<int> &shape) {
+    const std::vector<size_t> &shape) {
     return shape; // scalar can be broadcasted to any shape
 }
 
-std::vector<int> compute_broadcast_shape(
-    const std::vector<int> &shape1,
-    const std::vector<int> &shape2) {
+std::vector<size_t> compute_broadcast_shape(
+    const std::vector<size_t> &shape1,
+    const std::vector<size_t> &shape2) {
 
     auto max_size = std::max(shape1.size(), shape2.size());
-    std::vector<int> result_shape(max_size, 1);
+    std::vector<size_t> result_shape(max_size, 1);
     for (size_t i = 0; i < max_size; ++i) {
-        int dim1 = (i < shape1.size()) ? shape1[shape1.size() - 1 - i] : 1;
-        int dim2 = (i < shape2.size()) ? shape2[shape2.size() - 1 - i] : 1;
+        size_t dim1 = (i < shape1.size()) ? shape1[shape1.size() - 1 - i] : 1;
+        size_t dim2 = (i < shape2.size()) ? shape2[shape2.size() - 1 - i] : 1;
 
         if (dim1 != dim2 && dim1 != 1 && dim2 != 1) {
             throw std::invalid_argument(
@@ -34,7 +34,7 @@ std::vector<int> compute_broadcast_shape(
 template <typename T>
 Tensor<T> scalar_to_tensor(T value) {
     // Create a 0D tensor (scalar)
-    std::vector<int> shape = {1};
+    std::vector<size_t> shape = {1};
     Tensor<T> tensor(shape);
     // Assign the value to the tensor
     tensor(0) = value;
@@ -43,7 +43,7 @@ Tensor<T> scalar_to_tensor(T value) {
 
 template <typename T>
 Tensor<T> broadcast(const Tensor<T> &tensor, 
-                 const std::vector<int> &shape) {
+                 const std::vector<size_t> &shape) {
     // Check if the tensor can be broadcasted to the new shape
     if (tensor.shape().size() > shape.size()) {
         throw std::invalid_argument(
@@ -69,11 +69,11 @@ Tensor<T> broadcast(const Tensor<T> &tensor,
          s-> [0, 0, 3, 1] (padding 2 dimensions)
 
     */
-    std::vector<int> r_shape = result.shape();
-    std::vector<int> r_strides = result.strides();
+    std::vector<size_t> r_shape = result.shape();
+    std::vector<size_t> r_strides = result.strides();
     
-    int padding = shape.size() - r_shape.size();
-    for (int i = 0; i < padding; ++i) {
+    size_t padding = shape.size() - r_shape.size();
+    for (size_t i = 0; i < padding; ++i) {
         r_shape.insert(r_shape.begin(), 1); // prepend 1
         r_strides.insert(r_strides.begin(), 0); // prepend 0 strides
     }
@@ -96,7 +96,7 @@ Tensor<T> broadcast(const Tensor<T> &tensor,
 
 template <typename T>
 Tensor<T> broadcast(const T &scalar, 
-                    const std::vector<int> &shape){
+                    const std::vector<size_t> &shape){
     // Convert scalar to tensor
     Tensor<T> tensor = scalar_to_tensor(scalar);
     // Broadcast the tensor to the new shape

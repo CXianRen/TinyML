@@ -8,11 +8,11 @@ typedef Tensor<float> TensorF;
 // Template test for binary operators (+, -, *, /)
 template <typename Op, typename OpFunc>
 void test_op_template(const std::string& op_name, OpFunc op_func) {
-  auto fill_and_check = [&](const std::vector<int>& shape) {
+  auto fill_and_check = [&](const std::vector<size_t>& shape) {
     TensorF t1(shape);
     TensorF t2(shape);
     // Fill tensors with values
-    for (int i = 0; i < t1.size(); ++i) {
+    for (size_t i = 0; i < t1.size(); ++i) {
       t1.data().get()[i] = static_cast<float>(i);
       t2.data().get()[i] = static_cast<float>(i + 1);
     }
@@ -22,7 +22,7 @@ void test_op_template(const std::string& op_name, OpFunc op_func) {
         "Error: t_result shape does not match expected shape after " 
         + op_name + "!");
     }
-    for (int i = 0; i < t_result.size(); ++i) {
+    for (size_t i = 0; i < t_result.size(); ++i) {
       float expected = Op{}(t1.data().get()[i], t2.data().get()[i]);
       if (t_result.data().get()[i] != expected) {
         throw std::runtime_error(
@@ -73,11 +73,11 @@ template <typename Op, typename OpFunc>
 void test_inplace_op_template(const std::string& op_name, OpFunc op_func) {
   std::cout << "Testing inplace operator " << op_name << " ..." << std::endl;
 
-  auto fill_and_check = [&](const std::vector<int>& shape) {
+  auto fill_and_check = [&](const std::vector<size_t>& shape) {
     TensorF t1(shape);
     TensorF t2(shape); // for comparison
     // Fill tensor with values
-    for (int i = 0; i < t1.size(); ++i) {
+    for (size_t i = 0; i < t1.size(); ++i) {
       t1.data().get()[i] = static_cast<float>(i);
       t2.data().get()[i] = static_cast<float>(i + 1); 
       // t2 is added to t1 in the inplace operation
@@ -91,7 +91,7 @@ void test_inplace_op_template(const std::string& op_name, OpFunc op_func) {
         "Error: t1 shape does not match expected shape after inplace " 
         + op_name + "!");
     }
-    for (int i = 0; i < t1.size(); ++i) {
+    for (size_t i = 0; i < t1.size(); ++i) {
       float expected = Op{}(t1_copy.data().get()[i], t2.data().get()[i]);
       if (t1.data().get()[i] != expected) {
         throw std::runtime_error(
@@ -152,25 +152,25 @@ void test_inplace_op_div() {
 void test_transpose() {
   START_TEST();
   TensorF t1({2, 3});
-  for (int i = 0; i < t1.shape()[0]; ++i) {
-    for (int j = 0; j < t1.shape()[1]; ++j) {
+  for (size_t i = 0; i < t1.shape()[0]; ++i) {
+    for (size_t j = 0; j < t1.shape()[1]; ++j) {
       t1(i, j) = static_cast<float>(i * t1.shape()[1] + j);
     }
   }
   TensorF t2 = mtb::transpose(t1, {1, 0}); // transpose
-  if (!compare_vectors(t2.shape(), std::vector<int>{3, 2})) {
+  if (!compare_vectors(t2.shape(), std::vector<size_t>{3, 2})) {
     throw std::runtime_error(
       "Error: t2 shape does not match expected shape after transpose!");
   }
 
   // check strides
-  if (!compare_vectors(t2.strides(), std::vector<int>{1, 3})) {
+  if (!compare_vectors(t2.strides(), std::vector<size_t>{1, 3})) {
     throw std::runtime_error(
       "Error: t2 strides do not match expected strides after transpose!");
   }
 
-  for (int i = 0; i < t2.shape()[0]; ++i) {
-    for (int j = 0; j < t2.shape()[1]; ++j) {
+  for (size_t i = 0; i < t2.shape()[0]; ++i) {
+    for (size_t j = 0; j < t2.shape()[1]; ++j) {
       if (t2(i, j) != t1(j, i)) {
         throw std::runtime_error("Error: t2(" + 
           std::to_string(i) + 
@@ -192,18 +192,18 @@ void test_concat() {
   std::cout << "size of t1: " << t1.size() << std::endl;
 
   // Fill tensors with values
-  for (int i = 0; i < t1.size(); ++i) {
+  for (size_t i = 0; i < t1.size(); ++i) {
     t1.data().get()[i] = static_cast<float>(i);
     t2.data().get()[i] = static_cast<float>(i + 6); // offset by 6
   }
   
   TensorF t_concat = mtb::concatenate<float>({t1, t2}, 0); // concatenate along first axis
-  if (!compare_vectors(t_concat.shape(), std::vector<int>{4, 3})) {
+  if (!compare_vectors(t_concat.shape(), std::vector<size_t>{4, 3})) {
     throw std::runtime_error("Error: t_concat shape does not match expected shape after concat!");
   }
   
-  for (int i = 0; i < t_concat.shape()[0]; ++i) {
-    for (int j = 0; j < t_concat.shape()[1]; ++j) {
+  for (size_t i = 0; i < t_concat.shape()[0]; ++i) {
+    for (size_t j = 0; j < t_concat.shape()[1]; ++j) {
       float expected_value = (i < 2) ? t1(i, j) : t2(i - 2, j);
       if (t_concat(i, j) != expected_value) {
         throw std::runtime_error("Error: t_concat(" + 
@@ -215,7 +215,7 @@ void test_concat() {
   }
   
   // Check the strides
-  if (!compare_vectors(t_concat.strides(), std::vector<int>{3, 1})) {
+  if (!compare_vectors(t_concat.strides(), std::vector<size_t>{3, 1})) {
     throw std::runtime_error("Error: t_concat strides do not match expected strides after concat!");
   }
 
@@ -228,11 +228,11 @@ void test_concat() {
 void test_max() {
   START_TEST();
   TensorF t1({2, 3});
-  for (int i = 0; i < t1.size(); ++i) {
+  for (size_t i = 0; i < t1.size(); ++i) {
     t1.data().get()[i] = static_cast<float>(i);
   }
   auto max_tensor = mtb::max(t1, 1); // max along axis 1
-  if (!compare_vectors(max_tensor.shape(), std::vector<int>{2,1})) {
+  if (!compare_vectors(max_tensor.shape(), std::vector<size_t>{2,1})) {
     throw std::runtime_error(
       "Error: max_tensor shape does not match expected shape after max!");
   }
@@ -242,11 +242,11 @@ void test_max() {
   }
   // 3D tensor
   TensorF t2({2, 3, 4});
-  for (int i = 0; i < t2.size(); ++i) {
+  for (size_t i = 0; i < t2.size(); ++i) {
     t2.data().get()[i] = static_cast<float>(i);
   }
   auto max_tensor_3d = mtb::max(t2, 2); // max along axis 2
-  if (!compare_vectors(max_tensor_3d.shape(), std::vector<int>{2, 3, 1})) {
+  if (!compare_vectors(max_tensor_3d.shape(), std::vector<size_t>{2, 3, 1})) {
     throw std::runtime_error(
       "Error: max_tensor_3d shape does not match expected shape after max!");
   }
@@ -266,11 +266,11 @@ void test_max() {
 void test_sum() {
   START_TEST();
   TensorF t1({2, 2, 3});
-  for (int i = 0; i < t1.size(); ++i) {
+  for (size_t i = 0; i < t1.size(); ++i) {
     t1.data().get()[i] = static_cast<float>(i + 1); // fill with values 1 to 12
   }
   TensorF t_sum = mtb::sum(t1, 2); // sum along axis 2
-  if (!compare_vectors(t_sum.shape(), std::vector<int>{2, 2, 1})) {
+  if (!compare_vectors(t_sum.shape(), std::vector<size_t>{2, 2, 1})) {
     throw std::runtime_error("Error: t_sum shape does not match expected shape after sum!");
   }
   if (t_sum(0, 0, 0) != (1.0f + 2.0f + 3.0f) || 
@@ -286,11 +286,11 @@ void test_sum() {
 void test_mean() {
   START_TEST();
   TensorF t1({2, 2, 3});
-  for (int i = 0; i < t1.size(); ++i) {
+  for (size_t i = 0; i < t1.size(); ++i) {
     t1.data().get()[i] = static_cast<float>(i + 1); // fill with values 1 to 12
   }
   TensorF t_mean = mtb::mean(t1, 2); // mean along axis 2
-  if (!compare_vectors(t_mean.shape(), std::vector<int>{2, 2, 1})) {
+  if (!compare_vectors(t_mean.shape(), std::vector<size_t>{2, 2, 1})) {
     std::cerr << "t_mean shape: " << t_mean.shape() << std::endl;
     std::cerr << "Expected shape: {2, 2, 1}" << std::endl;
     throw std::runtime_error(
@@ -310,11 +310,11 @@ void test_mean() {
 void test_var() {
   START_TEST();
   TensorF t1({2, 2, 3});
-  for (int i = 0; i < t1.size(); ++i) {
+  for (size_t i = 0; i < t1.size(); ++i) {
     t1.data().get()[i] = static_cast<float>(i + 1); // fill with values 1 to 12
   }
   TensorF t_var = mtb::var(t1, 2); // var along axis 2
-  if (!compare_vectors(t_var.shape(), std::vector<int>{2, 2, 1})) {
+  if (!compare_vectors(t_var.shape(), std::vector<size_t>{2, 2, 1})) {
     throw std::runtime_error("Error: t_var shape does not match expected shape after var!");
   }
 
@@ -340,14 +340,14 @@ void test_unary_op(const std::string& name,
   Func tensor_func, 
   StdFunc std_func) {
   TensorF t({2, 3});
-  for (int i = 0; i < t.size(); ++i) {
+  for (size_t i = 0; i < t.size(); ++i) {
     t.data().get()[i] = static_cast<float>(i + 1); // covers negative and positive
   }
   TensorF t_result = tensor_func(t);
   if (!compare_vectors(t_result.shape(), t.shape())) {
     throw std::runtime_error("Error: t_result shape does not match t shape after " + name + "!");
   }
-  for (int i = 0; i < t_result.size(); ++i) {
+  for (size_t i = 0; i < t_result.size(); ++i) {
     float expected = std_func(t.data().get()[i]);
     if (t_result.data().get()[i] != expected) {
       throw std::runtime_error("Error: t_result(" + std::to_string(i) + ") does not match expected value after " + name + "!");

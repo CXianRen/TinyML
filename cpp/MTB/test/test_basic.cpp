@@ -8,26 +8,24 @@ typedef Tensor<float> TensorF;
 void test_constructor() {
   START_TEST();
   TensorF t1({10});        // 1D tensor
+  std::cout << "t1 shape: " << t1.shape() << std::endl;
   TensorF t2({2, 3});      // 2D tensor
+  std::cout << "t2 shape: " << t2.shape() << std::endl;
   TensorF t3({2, 3, 4});   // 3D tensor
+  std::cout << "t3 shape: " << t3.shape() << std::endl;
   TensorF t4({2, 3, 4, 5});// 4D tensor
   
-  std::cout << "t1 shape: " << t1.shape() << std::endl;
-  std::cout << "t2 shape: " << t2.shape() << std::endl;
-  std::cout << "t3 shape: " << t3.shape() << std::endl;
-  std::cout << "t4 shape: " << t4.shape() << std::endl;
-
   // check the shapes
-  if (!compare_vectors(t1.shape(), std::vector<int>{10})) {
+  if (!compare_vectors(t1.shape(), std::vector<size_t>{10})) {
     throw std::runtime_error("Error: t1 shape does not match expected shape!");
   }
-  if (!compare_vectors(t2.shape(), std::vector<int>{2, 3})) {
+  if (!compare_vectors(t2.shape(), std::vector<size_t>{2, 3})) {
     throw std::runtime_error("Error: t2 shape does not match expected shape!");
   }
-  if (!compare_vectors(t3.shape(), std::vector<int>{2, 3, 4})) {
+  if (!compare_vectors(t3.shape(), std::vector<size_t>{2, 3, 4})) {
     throw std::runtime_error("Error: t3 shape does not match expected shape!");
   }
-  if (!compare_vectors(t4.shape(), std::vector<int>{2, 3, 4, 5})) {
+  if (!compare_vectors(t4.shape(), std::vector<size_t>{2, 3, 4, 5})) {
     throw std::runtime_error("Error: t4 shape does not match expected shape!");
   }
 
@@ -45,31 +43,31 @@ void test_constructor() {
      throw std::runtime_error("Error: t4 size does not match expected size!");
   }
 
-  // check the data pointers
+  // check the data posize_ters
   if (t1.data().get() == nullptr) {
-    throw std::runtime_error("Error: t1 data pointer is null!");
+    throw std::runtime_error("Error: t1 data posize_ter is null!");
   }
   if (t2.data().get() == nullptr) {
-    throw std::runtime_error("Error: t2 data pointer is null!");
+    throw std::runtime_error("Error: t2 data posize_ter is null!");
   }
   if (t3.data().get() == nullptr) {
-    throw std::runtime_error("Error: t3 data pointer is null!");
+    throw std::runtime_error("Error: t3 data posize_ter is null!");
   }
   if (t4.data().get() == nullptr) {
-    throw std::runtime_error("Error: t4 data pointer is null!");
+    throw std::runtime_error("Error: t4 data posize_ter is null!");
   }
 
   // check the strides
-  if (!compare_vectors(t1.strides(), std::vector<int>{1})) {
+  if (!compare_vectors(t1.strides(), std::vector<size_t>{1})) {
     throw std::runtime_error("Error: t1 strides do not match expected strides!");
   }
-  if (!compare_vectors(t2.strides(), std::vector<int>{3, 1})) {
+  if (!compare_vectors(t2.strides(), std::vector<size_t>{3, 1})) {
     throw std::runtime_error("Error: t2 strides do not match expected strides!");
     }
-  if (!compare_vectors(t3.strides(), std::vector<int>{12, 4, 1})) {
+  if (!compare_vectors(t3.strides(), std::vector<size_t>{12, 4, 1})) {
     throw std::runtime_error("Error: t3 strides do not match expected strides!");
   }
-  if (!compare_vectors(t4.strides(), std::vector<int>{60, 20, 5, 1})) {
+  if (!compare_vectors(t4.strides(), std::vector<size_t>{60, 20, 5, 1})) {
     throw std::runtime_error("Error: t4 strides do not match expected strides!");
   }
 
@@ -183,11 +181,11 @@ void test_reshape() {
   TensorF t2 = t1.reshape({3, 2}); // reshape
   std::cout << "t1 shape: " << t1.shape() << std::endl;
   std::cout << "t2 shape: " << t2.shape() << std::endl;
-  if (!compare_vectors(t2.shape(), std::vector<int>{3, 2})) {
+  if (!compare_vectors(t2.shape(), std::vector<size_t>{3, 2})) {
     throw std::runtime_error("Error: t2 shape does not match expected shape after reshape!");
   }
   // check strides
-  if (!compare_vectors(t2.strides(), std::vector<int>{2, 1})) {
+  if (!compare_vectors(t2.strides(), std::vector<size_t>{2, 1})) {
     throw std::runtime_error("Error: t2 strides do not match expected strides after reshape!");
   }
   PASSLOG();
@@ -199,25 +197,25 @@ void test_operator() {
   
   // 1 D tensor
   TensorF t1({5});
-  for (int i = 0; i < t1.size(); ++i) {
+  for (size_t i = 0; i < t1.size(); ++i) {
     t1(i) = static_cast<float>(i); // fill with values
   }
   // check values
-  for (int i = 0; i < t1.size(); ++i) {
+  for (size_t i = 0; i < t1.size(); ++i) {
     if (t1(i) != static_cast<float>(i)) {
       throw std::runtime_error("Error: t1(" + std::to_string(i) + ") does not match expected value!");
     }
   }
   // 2 D tensor
   TensorF t2({2, 3});
-  for (int i = 0; i < t2.shape()[0]; ++i) {
-    for (int j = 0; j < t2.shape()[1]; ++j) {
+  for (size_t i = 0; i < t2.shape()[0]; ++i) {
+    for (size_t j = 0; j < t2.shape()[1]; ++j) {
       t2(i, j) = static_cast<float>(i * t2.shape()[1] + j); // fill with values
     }
   }
   // check values
-  for (int i = 0; i < t2.shape()[0]; ++i) {
-    for (int j = 0; j < t2.shape()[1]; ++j) {
+  for (size_t i = 0; i < t2.shape()[0]; ++i) {
+    for (size_t j = 0; j < t2.shape()[1]; ++j) {
       if (t2(i, j) != static_cast<float>(i * t2.shape()[1] + j)) {
         throw std::runtime_error("Error: t2(" + std::to_string(i) + ", " + std::to_string(j) + ") does not match expected value!");
       }
@@ -225,17 +223,17 @@ void test_operator() {
   }
   // 3 D tensor
   TensorF t3({2, 2, 2});
-  for (int i = 0; i < t3.shape()[0]; ++i) {
-    for (int j = 0; j < t3.shape()[1]; ++j) {
-      for (int k = 0; k < t3.shape()[2]; ++k) {
+  for (size_t i = 0; i < t3.shape()[0]; ++i) {
+    for (size_t j = 0; j < t3.shape()[1]; ++j) {
+      for (size_t k = 0; k < t3.shape()[2]; ++k) {
         t3(i, j, k) = static_cast<float>(i * t3.shape()[1] * t3.shape()[2] + j * t3.shape()[2] + k); // fill with values
       }
     }
   }
   // check values
-  for (int i = 0; i < t3.shape()[0]; ++i) {
-    for (int j = 0; j < t3.shape()[1]; ++j) {
-      for (int k = 0; k < t3.shape()[2]; ++k) {
+  for (size_t i = 0; i < t3.shape()[0]; ++i) {
+    for (size_t j = 0; j < t3.shape()[1]; ++j) {
+      for (size_t k = 0; k < t3.shape()[2]; ++k) {
         if (t3(i, j, k) != static_cast<float>(i * t3.shape()[1] * t3.shape()[2] + j * t3.shape()[2] + k)) {
           throw std::runtime_error("Error: t3(" + std::to_string(i) + ", " + std::to_string(j) + ", " + std::to_string(k) + ") does not match expected value!");
         }
@@ -244,20 +242,20 @@ void test_operator() {
   }
   // 4 D tensor
   TensorF t4({2, 2, 2, 2});
-  for (int i = 0; i < t4.shape()[0]; ++i) {
-    for (int j = 0; j < t4.shape()[1]; ++j) {
-      for (int k = 0; k < t4.shape()[2]; ++k) {
-        for (int l = 0; l < t4.shape()[3]; ++l) {
+  for (size_t i = 0; i < t4.shape()[0]; ++i) {
+    for (size_t j = 0; j < t4.shape()[1]; ++j) {
+      for (size_t k = 0; k < t4.shape()[2]; ++k) {
+        for (size_t l = 0; l < t4.shape()[3]; ++l) {
           t4(i, j, k, l) = static_cast<float>(i * t4.shape()[1] * t4.shape()[2] * t4.shape()[3] + j * t4.shape()[2] * t4.shape()[3] + k * t4.shape()[3] + l); // fill with values
         }
       }
     }
   }
   // check values
-  for (int i = 0; i < t4.shape()[0]; ++i) {
-    for (int j = 0; j < t4.shape()[1]; ++j) {
-      for (int k = 0; k < t4.shape()[2]; ++k) {
-        for (int l = 0; l < t4.shape()[3]; ++l) {
+  for (size_t i = 0; i < t4.shape()[0]; ++i) {
+    for (size_t j = 0; j < t4.shape()[1]; ++j) {
+      for (size_t k = 0; k < t4.shape()[2]; ++k) {
+        for (size_t l = 0; l < t4.shape()[3]; ++l) {
           if (t4(i, j, k, l) != static_cast<float>(i * t4.shape()[1] * t4.shape()[2] * t4.shape()[3] + j * t4.shape()[2] * t4.shape()[3] + k * t4.shape()[3] + l)) {
             throw std::runtime_error("Error: t4(" + std::to_string(i) + ", " + std::to_string(j) + ", " + std::to_string(k) + ", " + std::to_string(l) + ") does not match expected value!");
           }
@@ -275,9 +273,9 @@ void test_bracket_operator() {
   
   TensorF t1({2, 3});
   TensorF t2 = t1[0]; // get first row
-  assert(t2.shape() == std::vector<int>{3});
-  assert(t2.strides() == std::vector<int>{1});
-  for (int i = 0; i < t2.size(); ++i) {
+  assert(t2.shape() == std::vector<size_t>{3});
+  assert(t2.strides() == std::vector<size_t>{1});
+  for (size_t i = 0; i < t2.size(); ++i) {
     assert(t2(i) == t1(0, i)); // check values
   }
   
@@ -290,8 +288,8 @@ void test_bracket_operator() {
   });
 
   TensorF t4 = t3[1]; // get second slice
-  assert((t4.shape() == std::vector<int>{2, 3}));
-  assert((t4.strides() == std::vector<int>{3, 1}));
+  assert((t4.shape() == std::vector<size_t>{2, 3}));
+  assert((t4.strides() == std::vector<size_t>{3, 1}));
   assert(t4(0, 0) == 7);
   assert(t4(0, 1) == 8);
   assert(t4(0, 2) == 9);
@@ -301,8 +299,8 @@ void test_bracket_operator() {
 
 
   TensorF t5 = t4[1]; // get second row of t4
-  assert(t5.shape() == std::vector<int>{3});
-  assert(t5.strides() == std::vector<int>{1});
+  assert(t5.shape() == std::vector<size_t>{3});
+  assert(t5.strides() == std::vector<size_t>{1});
   assert(t5(0) == 10);
   assert(t5(1) == 11);
   assert(t5(2) == 12);

@@ -27,7 +27,7 @@ void test_GEMM_2d(){
     29.0f, 40.0f, 51.0f
   };
   
-  for (int i = 0; c.size() > i; ++i) {
+  for (size_t i = 0; c.size() > i; ++i) {
     if (c.data()[i] != expected[i]) {
       std::cerr << "GEMM test failed at index " << i << ": expected " 
                 << expected[i] << ", got " << c.data()[i] << std::endl;
@@ -61,7 +61,7 @@ void test_GEMM_2d_transpose(){
     29.0f, 40.0f, 51.0f
   };
 
-  for (int i = 0; d.size() > i; ++i) {
+  for (size_t i = 0; d.size() > i; ++i) {
     if (d.data()[i] != expected[i]) {
       std::cerr << "GEMM transpose test failed at index " << i << ": expected " 
                 << expected[i] << ", got " << d.data()[i] << std::endl;
@@ -80,25 +80,25 @@ void test_generate_batch_indices() {
   auto indices = mtb::generate_batch_indices({2,2});
   
   assert(indices.size() == 4);
-  assert(indices[0] == std::vector<int>({0, 0}));
-  assert(indices[1] == std::vector<int>({0, 1}));
-  assert(indices[2] == std::vector<int>({1, 0}));
-  assert(indices[3] == std::vector<int>({1, 1}));
+  assert(indices[0] == std::vector<size_t>({0, 0}));
+  assert(indices[1] == std::vector<size_t>({0, 1}));
+  assert(indices[2] == std::vector<size_t>({1, 0}));
+  assert(indices[3] == std::vector<size_t>({1, 1}));
 
   auto indices2 = mtb::generate_batch_indices({3, 2, 2});
   assert(indices2.size() == 12);
-  assert(indices2[0] == std::vector<int>({0, 0, 0}));
-  assert(indices2[1] == std::vector<int>({0, 0, 1}));
-  assert(indices2[2] == std::vector<int>({0, 1, 0}));
-  assert(indices2[3] == std::vector<int>({0, 1, 1}));
-  assert(indices2[4] == std::vector<int>({1, 0, 0}));
-  assert(indices2[5] == std::vector<int>({1, 0, 1}));
-  assert(indices2[6] == std::vector<int>({1, 1, 0}));
-  assert(indices2[7] == std::vector<int>({1, 1, 1}));
-  assert(indices2[8] == std::vector<int>({2, 0, 0}));
-  assert(indices2[9] == std::vector<int>({2, 0, 1}));
-  assert(indices2[10] == std::vector<int>({2, 1, 0}));
-  assert(indices2[11] == std::vector<int>({2, 1, 1}));
+  assert(indices2[0] == std::vector<size_t>({0, 0, 0}));
+  assert(indices2[1] == std::vector<size_t>({0, 0, 1}));
+  assert(indices2[2] == std::vector<size_t>({0, 1, 0}));
+  assert(indices2[3] == std::vector<size_t>({0, 1, 1}));
+  assert(indices2[4] == std::vector<size_t>({1, 0, 0}));
+  assert(indices2[5] == std::vector<size_t>({1, 0, 1}));
+  assert(indices2[6] == std::vector<size_t>({1, 1, 0}));
+  assert(indices2[7] == std::vector<size_t>({1, 1, 1}));
+  assert(indices2[8] == std::vector<size_t>({2, 0, 0}));
+  assert(indices2[9] == std::vector<size_t>({2, 0, 1}));
+  assert(indices2[10] == std::vector<size_t>({2, 1, 0}));
+  assert(indices2[11] == std::vector<size_t>({2, 1, 1}));
 
   PASSLOG();
 }
@@ -124,7 +124,7 @@ void test_matmul() {
       32.0f, 77.0f
     };
     
-    for(int i = 0; i < c.size(); ++i) {
+    for(size_t i = 0; i < c.size(); ++i) {
       assert(c.data()[i] == expected[i]);
     }
   }
@@ -153,11 +153,11 @@ void test_matmul() {
       // (49.0f + 72.0f + 81.0f), (70.0f + 88.0f + 108.0f),
       // (70.0f + 88.0f + 108.0f), (100.0f + 121.0f + 144.0f)
     };
-    assert(c.shape() == std::vector<int>({2, 2, 2}));
-    assert(c.strides() == std::vector<int>({4, 2, 1}));
+    assert(c.shape() == std::vector<size_t>({2, 2, 2}));
+    assert(c.strides() == std::vector<size_t>({4, 2, 1}));
     assert(c.size() == 8);
 
-    for(int i = 0; i < c.size(); ++i) {
+    for(size_t i = 0; i < c.size(); ++i) {
       if (c.data()[i] != expected[i]) {
         std::cerr << "Matmul test failed at index " << i << ": expected " 
                   << expected[i] << ", got " << c.data()[i] << std::endl;

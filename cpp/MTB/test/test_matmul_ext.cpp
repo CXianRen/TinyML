@@ -10,7 +10,7 @@ using namespace mtb;
 #define FP_TYPE float
 typedef Tensor<FP_TYPE> TensorF;
 
-std::vector<FP_TYPE> load_data(const std::string& filename, int size) {
+std::vector<FP_TYPE> load_data(const std::string& filename, size_t size) {
     std::ifstream file(filename, std::ios::binary| std::ios::ate);
     if (!file) {
         std::cerr << "Error opening file: " << filename << std::endl;
@@ -60,14 +60,14 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    std::vector<int> shape_m;
-    std::vector<int> mt;
-    std::vector<int> shape_n;
-    std::vector<int> nt;
+    std::vector<size_t> shape_m;
+    std::vector<size_t> mt;
+    std::vector<size_t> shape_n;
+    std::vector<size_t> nt;
     std::string data_file_path;
 
     // Helper lambda to parse shape arguments
-    auto parse_shape = [&](int& i, std::vector<int>& shape) {
+    auto parse_shape = [&](size_t& i, std::vector<size_t>& shape) {
         ++i;
         while (i < argc && argv[i][0] != '-') {
             shape.push_back(std::stoi(argv[i]));
@@ -77,7 +77,7 @@ int main(int argc, char** argv) {
     };
 
     // Parse command line arguments
-    for (int i = 1; i < argc; ++i) {
+    for (size_t i = 1; i < argc; ++i) {
         std::string arg = argv[i];
         if (arg == "--m") {
             parse_shape(i, shape_m);

@@ -7,7 +7,7 @@ namespace mtb {
 
 // transpose function
 template <typename T>
-Tensor<T> transpose(Tensor<T> &tensor, std::vector<int> axes) {
+Tensor<T> transpose(Tensor<T> &tensor, std::vector<size_t> axes) {
     // just update the shape and strides of the tensor
 
     // if axes is not equal to shape size, then throw error
@@ -15,8 +15,8 @@ Tensor<T> transpose(Tensor<T> &tensor, std::vector<int> axes) {
         throw std::invalid_argument("Axes size must match tensor shape size");
     }
     //
-    std::vector<int> new_shape(tensor.shape().size());
-    std::vector<int> new_strides(tensor.strides().size());
+    std::vector<size_t> new_shape(tensor.shape().size());
+    std::vector<size_t> new_strides(tensor.strides().size());
     for (size_t i = 0; i < axes.size(); ++i) {
         if (axes[i] < 0 || axes[i] >= tensor.shape().size()) {
             throw std::out_of_range("Axis index out of range");
@@ -41,8 +41,8 @@ Tensor<T> concatenate_dim0(const std::vector<Tensor<T>> &tensors) {
     }
 
     // check if all tensors have the same shape except for the first dimension
-    int total_size = 0;
-    std::vector<int> shape = tensors[0].shape();
+    size_t total_size = 0;
+    std::vector<size_t> shape = tensors[0].shape();
     for (const auto &tensor : tensors) {
         if (tensor.shape().size() != shape.size()) {
             throw std::invalid_argument(
@@ -59,12 +59,12 @@ Tensor<T> concatenate_dim0(const std::vector<Tensor<T>> &tensors) {
     }
 
     // create a new tensor with the concatenated shape
-    std::vector<int> new_shape = shape;
+    std::vector<size_t> new_shape = shape;
     // set the first dimension to the total size
     new_shape[0] = total_size; 
     Tensor<T> result(new_shape);
     // copy the data from each tensor into the result tensor
-    int offset = 0;
+    size_t offset = 0;
     for (const auto &tensor : tensors) {
         auto s_ptr = tensor.data().get();
         auto d_ptr = result.data().get();
@@ -107,7 +107,7 @@ Tensor<T> where(const Tensor<bool> &condition,
     auto r_ptr = result.data().get();
     auto t_ptr = tensor.data().get();
     auto cond_ptr = condition.data().get();
-    for (int i = 0; i < condition.size(); ++i) {
+    for (size_t i = 0; i < condition.size(); ++i) {
         r_ptr[i] = cond_ptr[i] ? t_ptr[i] : y;
     }
     return result;
@@ -121,19 +121,19 @@ Tensor<T> max_lastdim(const Tensor<T> &tensor){
     }
     // create a new tensor with the shape of the original tensor
     // except for the last dimension
-    std::vector<int> new_shape = tensor.shape();
+    std::vector<size_t> new_shape = tensor.shape();
     // reduce last dimension to 1
     new_shape[new_shape.size() - 1] = 1; 
     Tensor<T> result(new_shape);
 
-    int last_dim = tensor.shape().back();
+    size_t last_dim = tensor.shape().back();
 
-    int offset = 0;
+    size_t offset = 0;
     auto t_ptr = tensor.data().get();
     auto r_ptr = result.data().get();
-    for (int i = 0; i < tensor.size() / last_dim; ++i) {
+    for (size_t i = 0; i < tensor.size() / last_dim; ++i) {
         T max_val = t_ptr[offset];
-        for (int j = 1; j < last_dim; ++j) {
+        for (size_t j = 1; j < last_dim; ++j) {
             if (t_ptr[offset + j] > max_val) {
                 max_val = t_ptr[offset + j];
             }
@@ -149,7 +149,7 @@ template <typename T>
 Tensor<T> max(const Tensor<T> &tensor, 
                 int axes) {
     // is the last dimension
-    if (axes == tensor.shape().size() - 1) {
+    if (axes == static_cast<int>(tensor.shape().size()) - 1) {
         axes = -1; // max along the last dimension
     }
 
@@ -170,22 +170,22 @@ Tensor<T> sum_lastdim(const Tensor<T> &tensor) {
     }
     // create a new tensor with the shape of the original tensor
     // except for the last dimension
-    std::vector<int> new_shape = tensor.shape();
+    std::vector<size_t> new_shape = tensor.shape();
     // reduce last dimension to 1
     new_shape[new_shape.size() - 1] = 1;
 
     Tensor<T> result(new_shape);
     
     // sum along the last dimension
-    int last_dim = tensor.shape().back();
+    size_t last_dim = tensor.shape().back();
     
     // compute the offset for the last dimension
-    int offset = 0;
+    size_t offset = 0;
     auto t_ptr = tensor.data().get();
     auto r_ptr = result.data().get();
-    for (int i = 0; i < tensor.size() / last_dim; ++i) {
+    for (size_t i = 0; i < tensor.size() / last_dim; ++i) {
         T sum = 0;
-        for (int j = 0; j < last_dim; ++j) {
+        for (size_t j = 0; j < last_dim; ++j) {
             sum += t_ptr[offset + j];
         }
         r_ptr[i] = sum;
@@ -198,7 +198,7 @@ template <typename T>
 Tensor<T> sum(const Tensor<T> &tensor, 
                 int axes) {
     // is the last dimension
-    if (axes == tensor.shape().size() - 1) {
+    if (axes == static_cast<int>(tensor.shape().size()) - 1) {
         axes = -1; // sum along the last dimension
     }
 
@@ -219,7 +219,7 @@ Tensor<T> mean_lastdim(const Tensor<T> &tensor) {
     }
     // create a new tensor with the shape of the original tensor
     // except for the last dimension
-    std::vector<int> new_shape = tensor.shape();
+    std::vector<size_t> new_shape = tensor.shape();
 
     // reduce last dimension to 1
     new_shape[new_shape.size() - 1] = 1;
@@ -227,15 +227,15 @@ Tensor<T> mean_lastdim(const Tensor<T> &tensor) {
     Tensor<T> result(new_shape);
     
     // compute the mean along the last dimension
-    int last_dim = tensor.shape().back();
+    size_t last_dim = tensor.shape().back();
     
     // compute the offset for the last dimension
-    int offset = 0;
+    size_t offset = 0;
     auto t_ptr = tensor.data().get();
     auto r_ptr = result.data().get();
-    for (int i = 0; i < tensor.size() / last_dim; ++i) {
+    for (size_t i = 0; i < tensor.size() / last_dim; ++i) {
         T sum = 0;
-        for (int j = 0; j < last_dim; ++j) {
+        for (size_t j = 0; j < last_dim; ++j) {
             sum += t_ptr[offset + j];
         }
         r_ptr[i] = sum / last_dim;
@@ -248,7 +248,7 @@ template <typename T>
 Tensor<T> mean(const Tensor<T> &tensor, 
                 int axes) {
     // is the last dimension
-    if (axes == tensor.shape().size() - 1) {
+    if (axes == static_cast<int>(tensor.shape().size()) - 1) {
         axes = -1; // mean along the last dimension
     }
 
@@ -269,29 +269,29 @@ Tensor<T> var_lastdim(const Tensor<T> &tensor) {
     }
     // create a new tensor with the shape of the original tensor
     // except for the last dimension
-    std::vector<int> new_shape = tensor.shape();
+    std::vector<size_t> new_shape = tensor.shape();
     // reduce last dimension to 1
     new_shape[new_shape.size() - 1] = 1;
     
     Tensor<T> result(new_shape);
     
     // compute the variance along the last dimension
-    int last_dim = tensor.shape().back();
+    size_t last_dim = tensor.shape().back();
     
     // compute the offset for the last dimension
-    int offset = 0;
+    size_t offset = 0;
     auto t_ptr = tensor.data().get();
     auto r_ptr = result.data().get();
-    for (int i = 0; i < tensor.size() / last_dim; ++i) {
+    for (size_t i = 0; i < tensor.size() / last_dim; ++i) {
         T sum = 0;
         T mean = 0;
-        for (int j = 0; j < last_dim; ++j) {
+        for (size_t j = 0; j < last_dim; ++j) {
             sum += t_ptr[offset + j];
         }
         mean = sum / last_dim;
         
         T var_sum = 0;
-        for (int j = 0; j < last_dim; ++j) {
+        for (size_t j = 0; j < last_dim; ++j) {
             auto diff = t_ptr[offset + j] - mean;
             var_sum += diff * diff;
         }
@@ -305,7 +305,7 @@ template <typename T>
 Tensor<T> var(const Tensor<T> &tensor, 
                 int axes) {
     // is the last dimension
-    if (axes == tensor.shape().size() - 1) {
+    if (axes == static_cast<int>(tensor.shape().size()) - 1) {
         axes = -1; // var along the last dimension
     }
 
@@ -326,7 +326,7 @@ Tensor<T> unary_elementwise(const Tensor<T> &tensor, F func, const char* opname)
     Tensor<T> result(tensor.shape());
     auto t_ptr = tensor.data().get();
     auto r_ptr = result.data().get();
-    for (int i = 0; i < tensor.size(); ++i) {
+    for (size_t i = 0; i < tensor.size(); ++i) {
         r_ptr[i] = func(t_ptr[i]);
     }
     return result;

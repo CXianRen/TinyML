@@ -10,22 +10,22 @@ template <typename T>
 void _GEMM(const Tensor<T>& a, const Tensor<T>& b, T* data){
     // a: [M, N], b: [N, K] -> result: [M, K]
  
-    int M = a.shape()[0];
-    int N = a.shape()[1];
-    int K = b.shape()[1];
+    size_t M = a.shape()[0];
+    size_t N = a.shape()[1];
+    size_t K = b.shape()[1];
 
-    int a_stride0 = a.strides()[0];
-    int a_stride1 = a.strides()[1];
-    int b_stride0 = b.strides()[0];
-    int b_stride1 = b.strides()[1];
+    size_t a_stride0 = a.strides()[0];
+    size_t a_stride1 = a.strides()[1];
+    size_t b_stride0 = b.strides()[0];
+    size_t b_stride1 = b.strides()[1];
 
     auto a_ptr = a.data().get();
     auto b_ptr = b.data().get();
 
     // Initialize the result tensor
-    for (int i = 0; i < M; ++i) {
-        for (int j = 0; j < K; ++j) {
-            for (int k = 0; k < N; ++k) {
+    for (size_t i = 0; i < M; ++i) {
+        for (size_t j = 0; j < K; ++j) {
+            for (size_t k = 0; k < N; ++k) {
                 data[i * K + j] += 
                     a_ptr[i * a_stride0 + k * a_stride1] * 
                     b_ptr[k * b_stride0 + j * b_stride1];
@@ -34,13 +34,14 @@ void _GEMM(const Tensor<T>& a, const Tensor<T>& b, T* data){
     }
 }
 
-std::vector<std::vector<int>> generate_batch_indices(
-        const std::vector<int>& shape) {
-    std::vector<std::vector<int>> result;
+std::vector<std::vector<size_t>> 
+generate_batch_indices(
+    const std::vector<size_t>& shape) {
+    std::vector<std::vector<size_t>> result;
     
-    int ndim = shape.size();
+    int ndim = static_cast<int>(shape.size());
     
-    std::vector<int> indices(ndim, 0);
+    std::vector<size_t> indices(ndim, 0);
     while (true) {
         result.push_back(indices);
         int i = ndim - 1;
@@ -74,11 +75,11 @@ Tensor<T> matmul(const Tensor<T>& m1, const Tensor<T>& m2) {
     auto new_a_shape = max_shape;
     auto new_b_shape = max_shape;
     // copy the shapes to the new shapes from the back
-    for (int i = 0; i < a_shape.size(); i++){
+    for (size_t i = 0; i < a_shape.size(); i++){
         new_a_shape[max_shape.size() - 1 - i] = 
             a_shape[a_shape.size() - 1 - i];
     }
-    for (int i = 0; i < b_shape.size(); i++){
+    for (size_t i = 0; i < b_shape.size(); i++){
         new_b_shape[max_shape.size() - 1 - i] = 
             b_shape[b_shape.size() - 1 - i];
     }
@@ -104,27 +105,30 @@ Tensor<T> matmul(const Tensor<T>& m1, const Tensor<T>& m2) {
     
     // compute the shape of the result tensor
     // [x,x, M, N] @ [x,x, N, K] = [x,x, M, K]
-    int M = a_shape[a_shape.size() - 2];
-    int N = a_shape[a_shape.size() - 1];
-    int K = b_shape[b_shape.size() - 1];
+    size_t M = a_shape[a_shape.size() - 2];
+    size_t N = a_shape[a_shape.size() - 1];
+    size_t K = b_shape[b_shape.size() - 1];
 
-    std::vector<int> result_shape = a_shape;
+    std::vector<size_t> result_shape = a_shape;
     result_shape[result_shape.size() - 2] = M;
     result_shape[result_shape.size() - 1] = K;
 
     Tensor<T> result = mtb::zeros<T>(result_shape);
 
     // generate batch shape
-    std::vector<int> batch_shape =
-        std::vector<int>(a_shape.begin(), 
+    std::vector<size_t> batch_shape =
+        std::vector<size_t>(a_shape.begin(), 
                          a_shape.end() - 2);
     
     // generate indexes for batch dimensions
     auto batch_indices = generate_batch_indices(batch_shape);
 
     // Always use the batch loop, even if batch_indices is empty (no batch dims)
-    for (int i = 0; i < std::max(1, static_cast<int>(batch_indices.size())); ++i) {
-        std::vector<int> indices;
+    for (size_t i = 0; 
+        i < std::max(static_cast<size_t>(1), batch_indices.size()); 
+        ++i) 
+    {
+        std::vector<size_t> indices;
         if (!batch_indices.empty()) {
             indices = batch_indices[i];
         }
