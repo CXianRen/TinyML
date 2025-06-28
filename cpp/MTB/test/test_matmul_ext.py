@@ -27,8 +27,8 @@ def main():
     # set seed for reproducibility
     np.random.seed(42)
     # Create random matrices
-    a = np.random.rand(*m).astype(dtype)
-    b = np.random.rand(*n).astype(dtype)
+    a = np.random.uniform(low=-1, high=1, size=m).astype(dtype)
+    b = np.random.uniform(low=-1, high=1, size=n).astype(dtype)
     print(f"Matrix A shape: {a.shape}, dtype: {a.dtype}")
     print(f"Matrix B shape: {b.shape}, dtype: {b.dtype}")
     # perform dot product
@@ -37,13 +37,12 @@ def main():
     if mt != []:
         print(f"Transposing matrix A with axes: {mt}")
         an = np.transpose(an, axes=mt)
+        print(f"new Matrix A strides: {an.strides}, shape: {an.shape}")
     if nt != []:
         print(f"Transposing matrix B with axes: {nt}")
         bn = np.transpose(bn, axes=nt)
+        print(f"new Matrix B strides: {bn.strides}, shape: {bn.shape}")
     c = np.matmul(an, bn)
-    # print("a :", a)
-    # print("b :", b)
-    # print("c :", c)
     print(f"Resulting matrix C shape: {c.shape}, dtype: {c.dtype}")
     if args.save_path:
         a.tofile(f"{args.save_path}/a.bin")

@@ -139,10 +139,25 @@ namespace mtb {
         c.data_ = std::shared_ptr<T[]>(
             new T[size_], 
             std::default_delete<T[]>());
-        memcpy(c.data_.get(), data_.get(), size_ * sizeof(T));
+        
+        std::vector<size_t> index(shape_.size(), 0);
+        for (size_t i = 0; i< size_; ++i){
+            // Calculate the flat index
+            size_t flat_index = 0;
+            for (size_t d = 0; d < shape_.size(); ++d) {
+                flat_index += index[d] * strides_[d];
+            }
+            c.data_.get()[i] = data_.get()[flat_index];
+            // update the index
+            for (ssize_t d = shape_.size() - 1; d >= 0; --d) {
+                if (++index[d] < shape_[d]) break;
+                // Reset this dimension and carry over
+                index[d] = 0; 
+            }
+        }
         return c;
     }
-
+    
 
     // reshape
     template <typename T>

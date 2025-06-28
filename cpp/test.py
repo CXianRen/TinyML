@@ -121,14 +121,25 @@ import numpy as np
 
 
 # 
-a = np.random.rand(1, 1, 128, 128)
-b = a[:, :, 5:10, 5:10]
-print("a shape:", a.shape)
-print("b shape:", b.shape)
-print("a strides:", a.strides)
-print("b strides:", b.strides)
-print("share data:", np.shares_memory(a, b))
-print("a C contiguous:", a.flags['C_CONTIGUOUS'])
-print("a F contiguous:", a.flags['F_CONTIGUOUS'])
-print("b C contiguous:", b.flags['C_CONTIGUOUS'])
-print("b F contiguous:", b.flags['F_CONTIGUOUS'])
+# a = np.random.rand(1, 1, 128, 128)
+# b = a[:, :, 5:10, 5:10]
+# print("a shape:", a.shape)
+# print("b shape:", b.shape)
+# print("a strides:", a.strides)
+# print("b strides:", b.strides)
+# print("share data:", np.shares_memory(a, b))
+# print("a C contiguous:", a.flags['C_CONTIGUOUS'])
+# print("a F contiguous:", a.flags['F_CONTIGUOUS'])
+# print("b C contiguous:", b.flags['C_CONTIGUOUS'])
+# print("b F contiguous:", b.flags['F_CONTIGUOUS'])
+
+
+
+a = np.array([
+    [1, 2, 3],
+    [4, 5, 7],
+])
+
+softmax = np.exp(a) / np.sum(np.exp(a), axis=1, keepdims=True)
+print("Softmax result:")
+print(softmax)

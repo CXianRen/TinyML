@@ -12,13 +12,13 @@ void test_MLinear(){
         MLinear<FP_T> linear(768, 768, false);
         auto input = mtb::random<FP_T>({2,5,768});
         auto output = linear.forward(input);
-        assert(output.shape() == std::vector<int>({2, 5, 768}));
+        assert(output.shape() == std::vector<size_t>({2, 5, 768}));
     }
     {
         MLinear<FP_T> linear(768, 768, true);
         auto input = mtb::random<FP_T>({2,5,768});
         auto output = linear.forward(input);
-        assert(output.shape() == std::vector<int>({2, 5, 768}));
+        assert(output.shape() == std::vector<size_t>({2, 5, 768}));
     }
     {
         auto weight = load_data<FP_T>("build/test/temp/weight.bin", 768*768);

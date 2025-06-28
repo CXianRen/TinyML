@@ -53,32 +53,43 @@ void test_random() {
 // test triu
 void test_triu() {
   START_TEST();
-  TensorF t1({4, 4});
-  for (size_t i = 0; i < t1.shape()[0]; ++i) {
-    for (size_t j = 0; j < t1.shape()[1]; ++j) {
-      t1(i, j) = static_cast<float>(i * t1.shape()[1] + j);
-    }
+  TensorF t1({3, 3}, {1.0f, 2.0f, 3.0f,
+                      4.0f, 5.0f, 6.0f,
+                      7.0f, 8.0f, 9.0f});
+
+  TensorF t2 = mtb::triu(t1, 0);
+
+  assert((t2.shape() == std::vector<size_t>{3, 3}));
+
+  std::vector<float> expected_data = {1.0f, 2.0f, 3.0f,
+                                      0.0f, 5.0f, 6.0f,
+                                      0.0f, 0.0f, 9.0f};
+  for (size_t i = 0; i < t2.size(); ++i) {
+    assert(t2.data().get()[i] == expected_data[i]);
   }
-  TensorF t2 = mtb::triu(t1);
-  if (!compare_vectors(t2.shape(), t1.shape())) {
-    throw std::runtime_error("Error: t2 shape does not match t1 shape after triu!");
+
+  TensorF t3 = mtb::triu(t1, 1);
+  assert((t3.shape() == std::vector<size_t>{3, 3}));
+  std::vector<float> expected_data2 = {0.0f, 2.0f, 3.0f,
+                                       0.0f, 0.0f, 6.0f,
+                                       0.0f, 0.0f, 0.0f};
+  for (size_t i = 0; i < t3.size(); ++i) {
+    assert(t3.data().get()[i] == expected_data2[i]);
   }
-  for (size_t i = 0; i < t2.shape()[0]; ++i) {
-    for (size_t j = 0; j < t2.shape()[1]; ++j) {
-      if (i > j && t2(i, j) != 0.0f) {
-        throw std::runtime_error("Error: t2(" + 
-          std::to_string(i) + 
-          ", " + std::to_string(j) + 
-          ") is not zero after triu!");
-      }
-      if (i <= j && t2(i, j) != t1(i, j)) {
-        throw std::runtime_error(
-          "Error: t2(" + std::to_string(i) + 
-          ", " + std::to_string(j) + 
-          ") does not match t1 value after triu!");
-      }
-    }
+
+  Tensor<uint8_t> t4({3, 3}, {1, 1 , 1,
+                              1, 1, 1,
+                              1, 1, 1});
+  Tensor<uint8_t> t5 = mtb::triu(t4, 0);
+  assert((t5.shape() == std::vector<size_t>{3, 3}));
+  std::vector<uint8_t> expected_data3 = {1, 1, 1,
+                                         0, 1, 1,
+                                         0, 0, 1};
+  
+  for (size_t i = 0; i < t5.size(); ++i) {
+    assert(t5.data().get()[i] == expected_data3[i]);
   }
+
   PASSLOG();
 }
 

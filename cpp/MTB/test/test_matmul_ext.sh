@@ -85,17 +85,21 @@ ${BIN_PATH} \
 echo " Finished case 5"
 
 echo " Starting case 6"
+# 1 5 16 48 -> 1 16 5 48 (0, 2, 1, 3)
+# 1 5 16 48 -> 1 16 5 48 -> 1 16 48 5 (0, 2, 3, 1)
 python  ${PY_SCRIPT_PATH} \
-  --m 1 16 5 64 \
-  --n 1 16 5 64 \
-  --nt 0 1 3 2 \
+  --m 1 5 16 48 \
+  --n 1 5 16 48 \
+  --mt 0 2 1 3 \
+  --nt 0 2 3 1 \
   --save_path ${SAVE_PATH} \
-  --dtype float32   
+  --dtype float32
 
 ${BIN_PATH} \
-  --m 1 16 5 64 \
-  --n 1 16 5 64 \
-  --nt 0 1 3 2 \
+  --m 1 5 16 48 \
+  --n 1 5 16 48 \
+  --mt 0 2 1 3 \
+  --nt 0 2 3 1 \
   --path ${SAVE_PATH}
 echo " Finished case 6"
 

@@ -357,4 +357,87 @@ Tensor<T> tanh(const Tensor<T> &tensor) {
     }, "tanh");
 }
 
+template <typename T>
+inline void softmax_1D(T* src, T*dst, size_t size, size_t stride = 1) {
+    T max_val = src[0];
+    for (size_t i = stride; i < size * stride; i += stride) {
+        if (src[i] > max_val) {
+            max_val = src[i];
+        }
+    }
+    T sum = 0;
+    for (size_t i = 0; i < size * stride; i += stride) {
+        dst[i] = std::exp(src[i] - max_val);
+        sum += dst[i];
+    }
+
+    for (size_t i = 0; i < size * stride; i += stride) {
+        dst[i] /= sum;
+    }
 }
+
+template <typename T>
+Tensor<T> softmax_2D(const Tensor<T> &tensor) {
+    if (tensor.shape().size() != 2) {
+        throw std::invalid_argument("Tensor must be 2D for softmax");
+    }
+    size_t rows = tensor.shape()[0];
+    size_t cols = tensor.shape()[1];
+
+    auto rows_stride = tensor.strides()[0];
+    auto cols_stride = tensor.strides()[1];
+    
+    Tensor<T> result(tensor.shape());
+    
+    auto src_ptr = tensor.data().get();
+    auto dst_ptr = result.data().get();
+    
+    for (size_t i = 0; i < rows; ++i) {
+        softmax_1D(src_ptr + i * rows_stride, 
+                   dst_ptr + i * rows_stride, 
+                   cols, cols_stride);
+    }
+    return result;
+}
+
+template <typename T>
+Tensor<T> softmax(const Tensor<T> &tensor, 
+    int axis = -1){
+        // softmax along the specified axis
+    if (axis < -static_cast<int>(tensor.shape().size()) ||
+        axis >= static_cast<int>(tensor.shape().size())) {
+        throw std::invalid_argument("Axis out of range for softmax");   
+    }
+
+    if (axis < 0) {
+        axis += tensor.shape().size(); // convert negative axis to positive
+    }
+
+    // if the last dimension is the axis, we can use 2D softmax
+    if (axis == static_cast<int>(tensor.shape().size()) - 1) {
+    // reshape the tensor to 2D if it is not already
+        auto r_t = tensor; //shallow copy
+        if (tensor.shape().size() == 1) {
+            // if it is 1D, we can treat it as a 2D tensor
+            r_t = r_t.reshape({1, r_t.shape()[0]});
+        }
+        // if more than 2D, we can reshape it to 2D, keep the last dimensions
+        else if (r_t.shape().size() > 2) {
+            auto last_dim = r_t.shape().back();
+            std::vector<size_t> new_shape = 
+                {r_t.size() / last_dim, last_dim};
+            r_t = r_t.reshape(new_shape);
+        }
+        auto result = softmax_2D(r_t);
+        // convert back to original shape if needed
+        auto original_shape = tensor.shape();
+        if (result.shape() != original_shape) {
+            result = result.reshape(original_shape);
+        }
+        return result;
+    } else {
+        throw std::invalid_argument("Softmax only supports last dimension for now");
+    }
+} // softmax
+
+} // namespace mtb

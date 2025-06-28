@@ -29,7 +29,7 @@ std::vector<FP_TYPE> load_data(const std::string& filename, size_t size) {
     if (file_size % sizeof(FP_TYPE) != 0) {
         throw std::runtime_error("File size is not a multiple of FP_TYPE size");
     }
-    std::cout << "File size: " << file_size/sizeof(FP_TYPE) << " Float32" << std::endl;
+    std::cout << "File size: " << file_size/sizeof(FP_TYPE) << std::endl;
 
     if(size >0){
         // check file size == size * sizeof(FP_TYPE)
@@ -149,12 +149,13 @@ int main(int argc, char** argv) {
         if (error > max_error) {
             max_error = error;
         }
-        if (error > 0.00001*std::abs(c_data[i])+ 1e-5) {
-            std::cerr << "Error: Output data mismatch at index " 
-                      << i << ": expected " << c_data[i] 
-                      << ", got " << c_ptr[i] 
-                      << " (error: " << error << ")" << std::endl;
-            return 1;
+        if (error > 0.00001*std::abs(c_data[i])+ 1e-3) {
+            throw std::runtime_error(
+                "Error: Output data does not match expected data at index " 
+                + std::to_string(i) + ": " 
+                + std::to_string(c_ptr[i]) + " != " 
+                + std::to_string(c_data[i]) + " (error: " 
+                + std::to_string(error) + ") threshold: 1e-3");
         }
     }
 

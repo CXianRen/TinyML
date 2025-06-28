@@ -1,0 +1,11 @@
+#!/bin/bash 
+set -e
+
+python MNN/test/test_linear.py
+./build/MNN/test/test_linear
+
+python MNN/test/test_embed.py
+./build/MNN/test/test_embed
+
+python MNN/test/test_selfAT.py
+./build/MNN/test/test_selfAT

@@ -379,6 +379,47 @@ void test_tanh() {
   PASSLOG();
 }
 
+void test_softmax(){
+  START_TEST();
+  TensorF t({3}, {1, 2, 3});
+  TensorF t_softmax = mtb::softmax(t);
+  assert(t_softmax.shape() == t.shape());
+  float expected[] = {0.09003057f, 0.24472847f, 0.66524096f};
+  for (size_t i = 0; i < t_softmax.size(); ++i) {
+    if (std::abs(t_softmax.data().get()[i] - expected[i]) > 1e-6) {
+      throw std::runtime_error("Error: t_softmax(" + std::to_string(i) + 
+        ") does not match expected value after softmax!");
+    }
+  }
+
+  // 2d
+  TensorF t2({2, 3}, {1, 2, 3, 4, 5, 7});
+  TensorF t_softmax2 = mtb::softmax(t2, 1);
+  assert(t_softmax2.shape() == t2.shape());
+  float expected2[] = {0.09003057f, 0.24472847f, 0.66524096f,
+                       0.04201007f, 0.1141952f,  0.84379473f};
+  for (size_t i = 0; i < t_softmax2.size(); ++i) {
+    if (std::abs(t_softmax2.data().get()[i] - expected2[i]) > 1e-6) {
+      throw std::runtime_error("Error: t_softmax2(" + std::to_string(i) + 
+        ") does not match expected value after softmax!");
+    }
+  }
+  
+  TensorF t3= t2.reshape({1, 1, 2, 3});
+  TensorF t_softmax3 = mtb::softmax(t3, -1);
+  assert(t_softmax3.shape() == t3.shape());
+  float expected3[] = {0.09003057f, 0.24472847f, 0.66524096f,
+                       0.04201007f, 0.1141952f,  0.84379473f};
+  for (size_t i = 0; i < t_softmax3.size(); ++i) {
+    if (std::abs(t_softmax3.data().get()[i] - expected3[i]) > 1e-6) {
+      throw std::runtime_error("Error: t_softmax3(" + std::to_string(i) + 
+        ") does not match expected value after softmax!");
+    }
+  }
+
+  PASSLOG();
+}
+
 int main(int argc, char** argv) {
   test_op_add();
   test_op_sub();
@@ -398,5 +439,8 @@ int main(int argc, char** argv) {
   test_exp();
   test_sqrt();
   test_tanh();
+
+  // 
+  test_softmax();
   return 0;
 }

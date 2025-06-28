@@ -9,13 +9,13 @@ class MModule():
         return self.forward(*args, **kwds)
 
 class MLinear(MModule):
-    def __init__(self, in_features, out_features, bias=True):
+    def __init__(self, in_features, out_features, bias=True, dtype=np.int32):
         self.in_features = in_features
         self.out_features = out_features
-        self.weight = np.random.rand(out_features, in_features)
+        self.weight = np.random.uniform(-1, 1, (out_features, in_features)).astype(dtype)
         
         if bias:
-            self.bias = np.random.rand(out_features)
+            self.bias = np.random.uniform(-1, 1, (out_features,)).astype(dtype)
         else:
             self.bias = None
 
@@ -31,19 +31,20 @@ class MLinear(MModule):
         return np.dot(x, self.weight.T)
 
 class MSelfAT(MModule):
-    def __init__(self):
+    def __init__(self, dtype=np.float32):
         self.embed_size = 768
         self.num_attention_heads = 16
         self.head_dim = self.embed_size // self.num_attention_heads
         
-        self.k_proj = MLinear(self.embed_size, self.embed_size, bias=False)
-        self.v_proj = MLinear(self.embed_size, self.embed_size, bias=False)
-        self.q_proj = MLinear(self.embed_size, self.embed_size, bias=False)
-        self.out_proj = MLinear(self.embed_size, self.embed_size, bias=True)
+        self.k_proj = MLinear(self.embed_size, self.embed_size, bias=False, dtype=dtype)
+        self.v_proj = MLinear(self.embed_size, self.embed_size, bias=False, dtype=dtype)
+        self.q_proj = MLinear(self.embed_size, self.embed_size, bias=False, dtype=dtype)
+        self.out_proj = MLinear(self.embed_size, self.embed_size, bias=True, dtype=dtype)
         
         # this maks is pregenerated for the attention mask
         self.mask = np.triu(np.ones((2048, 2048)), k=1).astype(bool).reshape(1, 1, 2048, 2048)
         
+        self.score = None 
 
     def get_kvq(self, hidden_states):     
         k = self.k_proj(hidden_states)  # [B, S, E] [E, E] | [B, S + 1, E] [E, E]
@@ -67,17 +68,20 @@ class MSelfAT(MModule):
         # [B, HN, S, HD] @ [B, HN, HD, S] -> [B, HN, S, S]
         # [B, HN, 1, HD] @ [B, HN, HD, S+1] -> [B, HN, 1, S+1]
         # Q                K                   
-        attention_scores = np.matmul(query_states, key_states.transpose(0, 1, 3, 2))
-
+        attention_scores = np.matmul(query_states, 
+                                     key_states.transpose(0, 1, 3, 2))
+        
         # masked attention 
         query_len = query_states.shape[2]
         key_len = key_states.shape[2]
         mask = self.mask[:,:, key_len - query_len: key_len, :key_len]
         attention_scores = np.where(mask, -np.inf, attention_scores)
-        
+         
         # Apply softmax to get attention weights
-        attention_weights = np.exp(attention_scores - np.max(attention_scores, axis=-1, keepdims=True))
-        attention_weights /= np.sum(attention_weights, axis=-1, keepdims=True)
+        attention_weights = np.exp(attention_scores - np.max(attention_scores, 
+                                    axis=-1, keepdims=True))
+        attention_weights /= np.sum(attention_weights, 
+                                    axis=-1, keepdims=True)
         
         # attention output  socre * value
         # [B, HN, S, S] @ [B, HN, S, HD] -> [B, HN, S, HD]
@@ -119,9 +123,10 @@ class MSelfAT(MModule):
         
         # Combine heads back to the original shape
         # [B, HN, S, HD] -> [B, S, HN, HD]
-        # [B, HN, 1, HD] -> [B, 1, HN, HD]
+        # [B, HN, 1, HD] -> [B, 1, HN, HD]     
         attention_output = np.transpose(
             attention_output, (0, 2, 1, 3)).copy()
+        
         # Reshape to [B, S, E]
         # [B, 1, HN, HD] -> [B, 1, E]
         attention_output = attention_output.reshape(
@@ -135,11 +140,11 @@ class MSelfAT(MModule):
         return out, key_states, value_states  # Return attention output and key/value states for caching
 
 class MLayerNorm(MModule):
-    def __init__(self, normalized_shape, eps=1e-5):
+    def __init__(self, normalized_shape, eps=1e-5, dtype=np.float32):
         self.normalized_shape = normalized_shape
         self.eps = eps
-        self.gamma = np.ones(normalized_shape)
-        self.beta = np.zeros(normalized_shape)
+        self.gamma = np.ones(normalized_shape).astype(dtype)
+        self.beta = np.zeros(normalized_shape).astype(dtype)
 
     def forward(self, x):
         # [B, S, E] -> [B, S, 1]
@@ -151,10 +156,10 @@ class MLayerNorm(MModule):
         return self.gamma * normalized_x + self.beta
     
 class MEmbed(MModule):
-    def __init__(self, vocab_size, embed_dim):
+    def __init__(self, vocab_size, embed_dim, dtype=np.float32):
         self.vocab_size = vocab_size
         self.embed_dim = embed_dim
-        self.weight = np.random.rand(vocab_size, embed_dim)
+        self.weight = np.random.rand(vocab_size, embed_dim).astype(dtype)
 
     def forward(self, input_ids):
         # input_ids shape: [B, S]

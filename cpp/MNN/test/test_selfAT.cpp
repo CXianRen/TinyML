@@ -1,5 +1,6 @@
 #include "MSelfAT.hpp"
 #include "test_common.hpp"
+#include <iomanip>
 
 using namespace mnn;
 using namespace mtb;
@@ -10,32 +11,24 @@ void test_SelfAT(){
     START_TEST();
     {
         MSelfAT<FP_T> att(768, 16, 768/16);
-        auto input = mtb::random<FP_T>({2,5,768});
-        auto output = att.forward(input);
-    }
-    // {
-    //     MLinear<FP_T> linear(768, 768, true);
-    //     auto input = mtb::random<FP_T>({2,5,768});
-    //     auto output = linear.forward(input);
-    //     assert(output.shape() == std::vector<int>({2, 5, 768}));
-    // }
-    // {
-    //     auto weight = load_data<FP_T>("build/test/temp/weight.bin", 768*768);
-    //     auto bias = load_data<FP_T>("build/test/temp/bias.bin", 768);
-    //     auto input = load_data<FP_T>("build/test/temp/input.bin", 2*5*768);
-    //     auto output = load_data<FP_T>("build/test/temp/output.bin", 2*5*768);
-
-    //     MLinear<FP_T> linear(768, 768, true);
-    //     //
-    //     linear.fill_weight(weight.data(), weight.size());
-    //     linear.fill_bias(bias.data(), bias.size());
-
-    //     auto input_t = Tensor<FP_T>({2, 5, 768}, input);
-    //     auto output_t = linear.forward(input_t);
-    //     compare_data(output_t.data().get(), 
-    //                 output.data(), output.size(), 1e-5);
-    // }
-    
+        auto k_w = load_data<FP_T>("build/test/temp/k_proj_weight.bin", 768*768);
+        auto v_w = load_data<FP_T>("build/test/temp/v_proj_weight.bin", 768*768);
+        auto q_w = load_data<FP_T>("build/test/temp/q_proj_weight.bin", 768*768);
+        auto o_w = load_data<FP_T>("build/test/temp/out_proj_weight.bin", 768*768);
+        auto o_b = load_data<FP_T>("build/test/temp/out_proj_bias.bin", 768);
+        auto it = load_data<FP_T>("build/test/temp/input.bin", 1*5*768);
+        auto ot = load_data<FP_T>("build/test/temp/output.bin", 1*5*768);
+        
+        att.fill_k(k_w.data(), k_w.size());
+        att.fill_v(v_w.data(), v_w.size());
+        att.fill_q(q_w.data(), q_w.size());
+        att.fill_out(o_w.data(), o_b.data(), o_w.size(), o_b.size());
+        auto input_t = Tensor<FP_T>({1, 5, 768}, it);
+        auto output_t = att.forward(input_t).copy();
+  
+        compare_data(output_t.data().get(), 
+                    ot.data(), ot.size(), 1e-3);
+    }  
     PASSLOG();
 }
 

@@ -66,12 +66,21 @@ void compare_data(FP_TYPE* data1, FP_TYPE* data2, int size,
         double error = std::abs(data1[i] - data2[i]);
         max_error = std::max(max_error, error);
         average_error += error;
-        if (error > 0.00001*std::abs(data2[i])+ 1e-5) {
+        if (error > 0.00001*std::abs(data2[i]) + threshold) {
             std::cerr << "Data mismatch at index " << i 
-                      << ": " << data1[i] << " != " << data2[i] << std::endl;
+                      << ": " << data1[i] << " != " << data2[i]
+                      << " (error: " << error << ")"
+                      << ", threshold: " << threshold 
+                      << std::endl;
             throw std::runtime_error("Data mismatch");
         }
     }
+    if (max_error > 1e-2){
+        std::cerr << "Max error is too large: " << max_error 
+                  << ", threshold: " << threshold << std::endl;
+        throw std::runtime_error("Max error is too large");
+    }
+    
     average_error /= size;
     std::cout << "Max error: " << max_error 
               << ", Average error: " << average_error << std::endl;
