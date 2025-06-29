@@ -215,10 +215,6 @@ namespace mtb {
                     std::to_string(i)); 
             }
             auto dim_size = ranges[i].second - ranges[i].first;
-            // if (dim_size == 1) {
-            //     // If the size is 1, we can skip this dimension
-            //     continue;
-            // }
             new_shape.push_back(dim_size);
         }
 
@@ -319,137 +315,227 @@ namespace mtb {
     
     // math operations
     // Helper for elementwise operations
-    template <typename T>
-    template <typename Op>
-    Tensor<T> Tensor<T>::elementwiseOp(
-        const Tensor<T> &other, Op op, const char* opname) const {
-        if (shape_ != other.shape_) {
-            throw std::invalid_argument(
-                std::string("Shapes must match for ") + opname);
-        }
-        Tensor result(shape_);
-        for (size_t i = 0; i < size_; ++i) {
-            result.data_.get()[i] = 
-                op(data_.get()[i], other.data_.get()[i]);
-        }
-        return result;
-    }
-
-    template <typename T>
-    Tensor<T> Tensor<T>::operator+(const Tensor<T> &other) const {
-        return elementwiseOp(other, std::plus<T>(), "addition");
-    }
-
-    template <typename T>
-    Tensor<T> Tensor<T>::operator-(const Tensor<T> &other) const {
-        return elementwiseOp(other, std::minus<T>(), "subtraction");
-    }
-
-    template <typename T>
-    Tensor<T> Tensor<T>::operator*(const Tensor<T> &other) const {
-        return elementwiseOp(other, std::multiplies<T>(), "multiplication");
-    }
-
-    template <typename T>
-    Tensor<T> Tensor<T>::operator/(const Tensor<T> &other) const {
-        // Custom lambda to check division by zero
-        return elementwiseOp(other, [](const T& a, const T& b) {
-            if (b == 0) throw std::runtime_error("Division by zero");
-            return a / b;
-        }, "division");
-    }
-
-    // inplace operations
-    template <typename T>
-    template <typename Op>
-    Tensor<T>& Tensor<T>::inplaceElementwiseOp(
-        const Tensor<T> &other, Op op, const char* opname) {
+    template <typename T, typename Op>
+    void elementwiseOp(
+        const Tensor<T> &x, 
+        const Tensor<T> &y,
+        const Tensor<T> &r, 
+        Op op, 
+        const char* opname) 
+    {
         // shallow copy
-        auto a = *this; 
-        auto b = other;
+        auto a = x;
+        auto b = y;
 
-        if (shape_ != other.shape_) {
+        if (a.shape() != b.shape()) {
             // try to broadcast the shapes
-            auto new_shape = compute_broadcast_shape(shape_, other.shape_);
+            auto new_shape = compute_broadcast_shape(
+                a.shape(), b.shape());
             a = broadcast(a, new_shape);
             b = broadcast(b, new_shape);
         }
 
-        if (a.shape_ != b.shape_) {
-            throw std::invalid_argument(std::string("Shapes must match for ") + opname);
+        if (a.shape() != b.shape()) {
+            throw std::invalid_argument(
+                std::string("Shapes must match for ") + opname);
         }
 
         // a general version for all cases
-        const size_t ndim = a.shape_.size();
+        const size_t ndim = a.shape().size();
         const size_t total = std::accumulate(
-            a.shape_.begin(), a.shape_.end(), 1, 
+            a.shape().begin(), a.shape().end(), 1, 
             std::multiplies<>());
-
+        
         // Compute strides for iteration
-        const auto& a_shape = a.shape_;
-        const auto& b_shape = b.shape_;
-        const auto& a_strides = a.strides_;
-        const auto& b_strides = b.strides_;
+        const auto& a_shape = a.shape();
+        const auto& b_shape = b.shape();
+        const auto& a_strides = a.strides();
+        const auto& b_strides = b.strides();
 
-        auto* a_ptr = a.data_.get();
-        auto* b_ptr = b.data_.get();
+        auto a_ptr = a.data().get();
+        auto b_ptr = b.data().get();    
+        auto r_ptr = r.data().get();
 
-        // Iterate using flat index + unravel
-        std::vector<size_t> indices(ndim, 0);
-
+        std::vector<size_t> indexes(ndim, 0);
         for (size_t idx = 0; idx < total; ++idx) {
             // Compute flat index with broadcasting
             size_t a_offset = 0;
             size_t b_offset = 0;
             for (size_t d = 0; d < ndim; ++d) {
-                a_offset += (a_shape[d] == 1 ? 0 : indices[d]) * a_strides[d];
-                b_offset += (b_shape[d] == 1 ? 0 : indices[d]) * b_strides[d];
+                a_offset += (a_shape[d] == 1 ? 0 : indexes[d]) * a_strides[d];
+                b_offset += (b_shape[d] == 1 ? 0 : indexes[d]) * b_strides[d];
             }
 
-            a_ptr[a_offset] = op(a_ptr[a_offset], b_ptr[b_offset]);
+            // Apply the operation
+            r_ptr[a_offset] = op(a_ptr[a_offset], b_ptr[b_offset]);
 
             // Advance multi-dimensional index
             for (ssize_t d = ndim - 1; d >= 0; --d) {
-                indices[d]++;
-                if (indices[d] < a_shape[d]) {
+                indexes[d]++;
+                if (indexes[d] < a_shape[d]) {
                     break;
                 }
-                indices[d] = 0;
+                indexes[d] = 0;
             }
         }
+    }
 
-        // shallow copy to this tensor (update the view)
-        *this = a; 
+    template <typename T>
+    Tensor<T> Tensor<T>::operator+(const Tensor<T> &other) const {
+        // new tensor to hold the result
+        Tensor<T> result(shape_);
+        // Call the elementwise operation
+        elementwiseOp(*this, other, result,
+            std::plus<T>(), "addition");
+        // Return the result tensor
+        return result;
+    }
+
+    template <typename T>
+    Tensor<T> Tensor<T>::operator+(const T value) const {
+        // Create a tensor from the scalar value
+        Tensor<T> v_t = scalar_to_tensor(value);
+        Tensor<T> result(shape_);
+        // Call the elementwise operation
+        elementwiseOp(*this, v_t, result,
+            std::plus<T>(), "addition");
+        // Return the result tensor
+        return result;
+    }
+
+    template <typename T>
+    Tensor<T> Tensor<T>::operator-(const Tensor<T> &other) const {
+        Tensor<T> result(shape_);
+        elementwiseOp(*this, other, result,
+            std::minus<T>(), "subtraction");
+        return result;
+    }
+
+    template <typename T>
+    Tensor<T> Tensor<T>::operator-(const T value) const {
+        Tensor<T> v_t = scalar_to_tensor(value);
+        Tensor<T> result(shape_);
+        elementwiseOp(*this, v_t, result,
+            std::minus<T>(), "subtraction");
+        return result;
+    }
+
+    template <typename T>
+    Tensor<T> Tensor<T>::operator*(const Tensor<T> &other) const {
+        Tensor<T> result(shape_);
+        elementwiseOp(*this, other, result,
+            std::multiplies<T>(), "multiplication");
+        return result;
+    }
+
+    template <typename T>
+    Tensor<T> Tensor<T>::operator*(const T value) const {
+        Tensor<T> v_t = scalar_to_tensor(value);
+        Tensor<T> result(shape_);
+        elementwiseOp(*this, v_t, result,
+            std::multiplies<T>(), "multiplication");
+        return result;
+    }
+
+    template <typename T>
+    Tensor<T> Tensor<T>::operator/(const Tensor<T> &other) const {
+        Tensor<T> result(shape_);
+        elementwiseOp(*this, other, result, 
+            [](const T& a, const T& b) {
+                if (b == 0) throw std::runtime_error("Division by zero");
+                return a / b;
+            }, "division");
+        return result;
+    }
+    
+    template <typename T>
+    Tensor<T> Tensor<T>::operator/(const T value) const {
+        if (value == 0) {
+            throw std::runtime_error("Division by zero");
+        }
+        // Create a tensor from the scalar value
+        Tensor<T> v_t = scalar_to_tensor(value);
+        Tensor<T> result(shape_);
+        // Call the elementwise operation
+        elementwiseOp(*this, v_t, result,
+            [](const T& a, const T& b) { return a / b; }, "division");
+        return result;
+    }
+
+    // Inplace operations
+    template <typename T>
+    Tensor<T>& Tensor<T>::operator+=(const Tensor<T> &other) {
+        elementwiseOp(
+            *this, other, *this,
+            std::plus<T>(), "addition");
         return *this;
     }
 
     template <typename T>
-    Tensor<T>& Tensor<T>::operator+=(const Tensor<T> &other) {
-        return inplaceElementwiseOp(
-            other, std::plus<T>(), "addition");
+    Tensor<T>& Tensor<T>::operator+=(const T value) {
+        auto v_t = scalar_to_tensor(value);
+        elementwiseOp(
+            *this, v_t, *this,
+            std::plus<T>(), "addition");
+        return *this;
     }
     
     template <typename T>
     Tensor<T>& Tensor<T>::operator-=(const Tensor<T> &other) {
-        return inplaceElementwiseOp(
-            other, std::minus<T>(), "subtraction");
+        elementwiseOp(
+            *this, other, *this,
+            std::minus<T>(), "subtraction");
+        return *this;
+    }
+
+    template <typename T>
+    Tensor<T>& Tensor<T>::operator-=(const T value) {
+        auto v_t = scalar_to_tensor(value);
+        elementwiseOp(
+            *this, v_t, *this,
+            std::minus<T>(), "subtraction");
+        return *this;
     }
 
     template <typename T>
     Tensor<T>& Tensor<T>::operator*=(const Tensor<T> &other) {
-        return inplaceElementwiseOp(
-            other, std::multiplies<T>(), "multiplication");
+        elementwiseOp(
+            *this, other, *this,
+            std::multiplies<T>(), "multiplication");
+        return *this;
+    }
+
+    template <typename T>
+    Tensor<T>& Tensor<T>::operator*=(const T value) {
+        auto v_t = scalar_to_tensor(value);
+        elementwiseOp(
+            *this, v_t, *this,
+            std::multiplies<T>(), "multiplication");
+        return *this;
     }
 
     template <typename T>
     Tensor<T>& Tensor<T>::operator/=(const Tensor<T> &other) {
         // Custom lambda to check division by zero
-        return inplaceElementwiseOp(
-            other, [](const T& a, const T& b) {
-            if (b == 0) 
-                throw std::runtime_error("Division by zero");
-            return a / b;
-        }, "division");
+        elementwiseOp(
+            *this, other, *this,
+            [](const T& a, const T& b) {
+                if (b == 0) throw std::runtime_error("Division by zero");
+                return a / b;
+            }, "division");
+        return *this;
     }
 
+    template <typename T>
+    Tensor<T>& Tensor<T>::operator/=(const T value) {
+        if (value == 0) {
+            throw std::runtime_error("Division by zero");
+        }
+        auto v_t = scalar_to_tensor(value);
+        elementwiseOp(
+            *this, v_t, *this,
+            [](const T& a, const T& b) { return a / b; }, 
+            "division");
+        return *this;
+    }
 } // namespace mtb

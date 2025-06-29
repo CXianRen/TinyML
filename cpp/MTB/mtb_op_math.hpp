@@ -221,6 +221,11 @@ Tensor<T> mean_lastdim(const Tensor<T> &tensor) {
     // except for the last dimension
     std::vector<size_t> new_shape = tensor.shape();
 
+    if (tensor.strides().back() != 1) {
+        throw std::invalid_argument(
+            "Tensor must be contiguous for mean");
+    }
+
     // reduce last dimension to 1
     new_shape[new_shape.size() - 1] = 1;
 
@@ -267,6 +272,12 @@ Tensor<T> var_lastdim(const Tensor<T> &tensor) {
     if (tensor.shape().empty()) {
         throw std::invalid_argument("Tensor must have at least one dimension");
     }
+
+    if (tensor.strides().back() != 1) {
+        throw std::invalid_argument(
+            "Tensor must be contiguous for variance");
+    }
+
     // create a new tensor with the shape of the original tensor
     // except for the last dimension
     std::vector<size_t> new_shape = tensor.shape();

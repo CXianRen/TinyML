@@ -72,18 +72,31 @@ class Tensor {
                   const size_t k, const size_t l) const;
     
     // math operations
-
     Tensor operator+(const Tensor &other) const;
+    Tensor operator+(const T value) const;
+
     Tensor operator-(const Tensor &other) const;
+    Tensor operator-(const T value) const;
+
     Tensor operator*(const Tensor &other) const;
+    Tensor operator*(const T value) const;
+
     Tensor operator/(const Tensor &other) const;
+    Tensor operator/(const T value) const;
 
     // inplace operations
     Tensor& operator+=(const Tensor &other);
-    Tensor& operator-=(const Tensor &other);
-    Tensor& operator*=(const Tensor &other);
-    Tensor& operator/=(const Tensor &other);
+    Tensor& operator+=(const T value);
 
+    Tensor& operator-=(const Tensor &other);
+    Tensor& operator-=(const T value);
+
+    Tensor& operator*=(const Tensor &other);
+    Tensor& operator*=(const T value);
+
+    Tensor& operator/=(const Tensor &other);
+    Tensor& operator/=(const T value);
+    
     // getter
     const std::vector<size_t>& shape() const {
         return shape_;
@@ -116,14 +129,6 @@ class Tensor {
     }
 
     private:
-    template <typename Op>
-    Tensor elementwiseOp(const Tensor &other, 
-        Op op, const char* opname) const;
-
-    template <typename Op>
-    Tensor& inplaceElementwiseOp(
-        const Tensor &other, Op op, const char* opname);
-
     // member 
     // shape of the tensor
     std::vector<size_t> shape_ = {}; 
