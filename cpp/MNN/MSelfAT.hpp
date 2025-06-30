@@ -21,7 +21,7 @@ public:
 		  out_proj_(embed_size_, embed_size_)
 		{}
 		
-	mtb::Tensor<T> forward(mtb::Tensor<T>& input) {
+	mtb::Tensor<T> forward(const mtb::Tensor<T>& input) {
 		// project input to query, key, and value
 		// intput [B, S, E] -> q, k, v [B, S, E]
 		auto q = q_proj_.forward(input);

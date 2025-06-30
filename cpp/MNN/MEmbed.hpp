@@ -31,14 +31,17 @@ class MEmbed {
                             "Index out of bounds for embedding.");
                     }
                     auto sub_tensor = weight_[index];
-                    std::cout << "sub_tensor shape: " 
-                              << sub_tensor.shape() << std::endl;
+                    // std::cout << "sub_tensor shape: " 
+                    //           << sub_tensor.shape() << std::endl;
                     output_tensors.push_back(sub_tensor);
                 }
             }
             
             // Concatenate the output tensors
-            return mtb::concatenate(output_tensors);
+            auto out = mtb::concatenate(output_tensors);
+            // Reshape to [B, S, embed_dim]
+            return out.reshape(
+                {input.shape()[0], input.shape()[1], embed_dim_});
         }
 
         void fill_weight(T* data, int size) {

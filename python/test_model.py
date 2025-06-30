@@ -10,12 +10,14 @@ print("Tokenizer type:", type(tokenizer))
 
 myModel = GPTNeoModel(num_layers=4)
 myModel.load("../model_state_dict")  # load the model state dict
+myModel.save_bin("../model_state_dict")  # save the model state dict in binary format
 
 def greedy_generate_no_cache(model, tokenizer, input_ids, max_new_tokens=100):
     # numpy version
     generated = input_ids
     cache = None
     for idx in range(max_new_tokens):
+        
         # input and output are numpy arrays
         if cache is None:
             outputs = model(generated, None)
@@ -24,6 +26,7 @@ def greedy_generate_no_cache(model, tokenizer, input_ids, max_new_tokens=100):
                 outputs = model(generated, cache, 
                     position_ids=np.arange(
                         generated.shape[1]).reshape(1, -1))
+                break
             else:
                 # print("input shape:", generated[:, -1:].shape)
                 outputs = model(generated[:, -1:], cache, 
@@ -46,9 +49,18 @@ def greedy_generate_no_cache(model, tokenizer, input_ids, max_new_tokens=100):
 input_ids = tokenizer("Once upon a time,", return_tensors="np").input_ids  # use numpy
 input_ids = input_ids.astype(np.int64)  # ensure the type is int64 for numpy
 
+
+print("position IDs:", np.arange(input_ids.shape[1]).reshape(1, -1))
+
 import time
 start_time = time.time()
-generated_ids = greedy_generate_no_cache(myModel, tokenizer, input_ids, max_new_tokens=200)
+# generated_ids = greedy_generate_no_cache(myModel, tokenizer, input_ids, max_new_tokens=200)
+print("Input IDs:", input_ids)
+position_ids = np.arange(input_ids.shape[1]).reshape(1, -1)
+print("Position IDs:", position_ids)
+outputs = myModel(input_ids, None, position_ids=position_ids)
+print("Output:", outputs)
+
 end_time = time.time()
 print(f"Average time per token: {(end_time - start_time) / 20:.4f} seconds")
 # print(generated_ids)

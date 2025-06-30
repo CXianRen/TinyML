@@ -18,6 +18,8 @@ void test_MEmbed(){
 
     Tensor<FP_T> result_tensor = embed.forward(input_tensor);
 
+    assert(result_tensor.shape() == std::vector<size_t>({2, 3, 768}));
+
     compare_data<FP_T>(result_tensor.data().get(), 
                         output.data(), 2 * 3 * 768, 1e-5f);
 

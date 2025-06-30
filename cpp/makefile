@@ -1,4 +1,4 @@
-SUBDIRS := MNN MTB
+SUBDIRS := MNN MTB GNEO
 
 .PHONY: all clean $(SUBDIRS) $(addsuffix _test, $(SUBDIRS))
 

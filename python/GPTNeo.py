@@ -124,4 +124,31 @@ class GPTNeoModel(MModule):
         
         # init lm_head
         self.lm_head.weight = np.load(f"{path}/lm_head/weight/parameters.npy")
+    
+    def save_bin(self, path="./model_state_dict"):
+        # save wte
+        self.wte.weight.tofile(f"{path}/transformer/wte/weight/parameters.bin")
+        self.wpe.weight.tofile(f"{path}/transformer/wpe/weight/parameters.bin")
+        # save layers
+        for i, layer in enumerate(self.layers):
+            layer.attention.attention.k_proj.weight.tofile(f"{path}/transformer/h/{i}/attn/attention/k_proj/weight/parameters.bin")
+            layer.attention.attention.v_proj.weight.tofile(f"{path}/transformer/h/{i}/attn/attention/v_proj/weight/parameters.bin")
+            layer.attention.attention.q_proj.weight.tofile(f"{path}/transformer/h/{i}/attn/attention/q_proj/weight/parameters.bin")
+            layer.attention.attention.out_proj.weight.tofile(f"{path}/transformer/h/{i}/attn/attention/out_proj/weight/parameters.bin")
+            layer.attention.attention.out_proj.bias.tofile(f"{path}/transformer/h/{i}/attn/attention/out_proj/bias/parameters.bin")
+            layer.mlp.c_fc.weight.tofile(f"{path}/transformer/h/{i}/mlp/c_fc/weight/parameters.bin")
+            layer.mlp.c_fc.bias.tofile(f"{path}/transformer/h/{i}/mlp/c_fc/bias/parameters.bin")
+            layer.mlp.c_proj.weight.tofile(f"{path}/transformer/h/{i}/mlp/c_proj/weight/parameters.bin")
+            layer.mlp.c_proj.bias.tofile(f"{path}/transformer/h/{i}/mlp/c_proj/bias/parameters.bin")
+            # save ln_1
+            layer.ln_1.gamma.tofile(f"{path}/transformer/h/{i}/ln_1/weight/parameters.bin")
+            layer.ln_1.beta.tofile(f"{path}/transformer/h/{i}/ln_1/bias/parameters.bin")
+            # save ln_2
+            layer.ln_2.gamma.tofile(f"{path}/transformer/h/{i}/ln_2/weight/parameters.bin")
+            layer.ln_2.beta.tofile(f"{path}/transformer/h/{i}/ln_2/bias/parameters.bin")    
+        # save ln_f
+        self.ln_f.gamma.tofile(f"{path}/transformer/ln_f/weight/parameters.bin")
+        self.ln_f.beta.tofile(f"{path}/transformer/ln_f/bias/parameters.bin")
         
+        # save lm_head
+        self.lm_head.weight.tofile(f"{path}/lm_head/weight/parameters.bin") 
