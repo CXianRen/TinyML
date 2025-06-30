@@ -352,6 +352,14 @@ Tensor<T> sqrt(const Tensor<T> &tensor) {
     }, "sqrt");
 }
 
+// pow function
+template <typename T>
+Tensor<T> pow(const Tensor<T> &tensor, int exponent) {
+    return unary_elementwise<T>(tensor, [exponent](const T& v) {
+        return std::pow(v, exponent);
+    }, "pow");
+}
+
 // exp function
 template <typename T>
 Tensor<T> exp(const Tensor<T> &tensor) {
