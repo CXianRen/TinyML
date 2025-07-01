@@ -25,6 +25,22 @@ void test_GPTNeo(){
         output_t.data().get(), output.data(), 
         output.size(), 1e-5);
 
+    auto next_token = output_t.slice(
+        {{0,1}, {4,5}, {0,50257}});
+    
+    std::cout << "shape of next token: "
+              << next_token.shape() << 
+              " size: " << next_token.size() 
+              << " stride: " << next_token.strides()
+              << std::endl;
+
+    auto next_token_index = mtb::argmax(next_token, -1);
+    std::cout << "next token index shape: "
+              << next_token_index.shape() << std::endl;
+    
+    assert(next_token_index.size() == 1);
+    assert(next_token_index.data()[0] == 612);
+    
     PASSLOG();
 }
 

@@ -459,4 +459,76 @@ Tensor<T> softmax(const Tensor<T> &tensor,
     }
 } // softmax
 
+
+template <typename T>
+Tensor<int> argmax(const Tensor<T> &tensor, 
+    int axis = -1) {
+    const auto &shape = tensor.shape();
+    const auto &strides = tensor.strides();
+
+    int ndims = static_cast<int>(shape.size());
+    if (axis < -ndims || axis >= ndims) {
+        throw std::invalid_argument("Axis out of range for argmax");
+    }
+    if (axis < 0) {
+        axis += ndims; // convert negative axis to positive
+    }
+
+    // create a result shape with axis set to 1
+    std::vector<size_t> result_shape = shape;
+    result_shape[axis] = 1;
+    Tensor<int> result(result_shape);
+
+    const T* src_ptr = tensor.data().get();
+    int* dst_ptr = result.data().get();
+    const auto& result_stride = result.strides();
+
+    size_t outer_count = 1;
+    for (int i = 0; i < axis; ++i) {
+        if(i != 0) {
+            outer_count *= shape[i];
+        }
+    }
+
+    std::vector<size_t> coord(ndims, 0);
+    for (size_t idx = 0; idx < outer_count; ++idx){
+        // convert idx to coordinates
+        size_t tmp = idx;
+        for (int i = ndims - 1; i >= 0; --i) {
+            if (i == axis){
+                coord[i] = 0;
+                // skip the axis we are reducing
+                continue; 
+            }
+            coord[i] = tmp % shape[i];
+            tmp /= shape[i];
+        }
+
+        // inner loop to find the max index
+        size_t max_index = 0;
+        T max_value;
+        for (size_t j = 0; j < shape[axis]; ++j) {
+            coord[axis] = j; // set the current axis
+            size_t flat_index = 0;
+            for (int i = 0; i < ndims; ++i) {
+                flat_index += coord[i] * strides[i];
+            }
+            if (j == 0 || src_ptr[flat_index] > max_value) {
+                max_value = src_ptr[flat_index];
+                max_index = j;
+            }
+        }
+
+        // set the result at the current outer index
+        coord[axis] = 0; // set the max index
+        size_t result_flat_index = 0;
+        for (int i = 0; i < ndims; ++i) {
+            result_flat_index += coord[i] * result_stride[i];
+        }
+        dst_ptr[result_flat_index] = static_cast<int>(max_index);
+    }
+
+    return result; 
+} // argmax
+
 } // namespace mtb

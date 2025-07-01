@@ -20,6 +20,10 @@ print("Position IDs shape:", position_ids.shape)
 output = model(input_ids, position_ids=position_ids)
 print("Output shape:", output.shape)
 print("Output:", output)
+next_token_logits = output[:, -1, :]
+next_token = np.argmax(next_token_logits, axis=-1).reshape(-1, 1)
+print("Next token:", next_token)
+
 
 # save the output to a file
 save_path = "build/test/temp"
