@@ -20,7 +20,17 @@ public:
 		  q_proj_(embed_size_, embed_size_, false),
 		  out_proj_(embed_size_, embed_size_)
 		{}
-		
+	
+	mtb::Tensor<T> split_head(mtb::Tensor<T>& input) {
+		// split the input tensor into multiple heads
+		// [B, S, E] -> [B, S, H, D]
+		auto reshaped = input.reshape(
+				{input.shape()[0], input.shape()[1], 
+				num_attention_heads_, head_dim_});
+		// transpose to [B, H, S, D]
+		return mtb::transpose(reshaped, {0, 2, 1, 3});
+	}
+
 	mtb::Tensor<T> forward(const mtb::Tensor<T>& input) {
 		// project input to query, key, and value
 		// intput [B, S, E] -> q, k, v [B, S, E]
@@ -30,20 +40,9 @@ public:
 
 		// split the tensors into multiple heads
 		// [B, S, E] -> [B, S, H, D]
-		q = q.reshape(
-				{q.shape()[0], q.shape()[1], 
-				num_attention_heads_, head_dim_});
-		q = mtb::transpose(q, {0, 2, 1, 3}); // [B, H, S, D]
-
-		k = k.reshape(
-				{k.shape()[0], k.shape()[1], 
-				num_attention_heads_, head_dim_});
-		k = mtb::transpose(k, {0, 2, 1, 3}); // [B, H, S, D]
-
-		v = v.reshape(
-				{v.shape()[0], v.shape()[1], 
-				num_attention_heads_, head_dim_});
-		v = mtb::transpose(v, {0, 2, 1, 3}); // [B, H, S, D]	
+		q = split_head(q);
+		k = split_head(k);
+		v = split_head(v);
 
 		// calculate attention scores
 		// [B, H, S, D] * [B, H, D, S] -> [B, H, S, S]
@@ -71,6 +70,7 @@ public:
 		// [B, S, E]
 		attn_output = out_proj_.forward(attn_output); 
 		return attn_output;
+
 	}
 
 	void fill_k(T* data, int size) {

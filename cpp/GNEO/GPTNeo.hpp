@@ -176,6 +176,7 @@ public:
     for (size_t i = 0; i < num_layers_; ++i) {
       hidden_states = layers_[i].forward(hidden_states);
     }
+    
     hidden_states = ln_f_.forward(hidden_states);
     auto logits = lm_head_.forward(hidden_states);
     return logits; // Return logits for next token prediction
