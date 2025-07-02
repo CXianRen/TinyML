@@ -166,11 +166,11 @@ public:
   Tensor<T> forward(const Tensor<int>& input_ids, 
                     const Tensor<int>& position_ids) {
     auto hidden_states = wte_.forward(input_ids);
-    std::cout << "hidden_states shape: " 
-              << hidden_states.shape() << std::endl;
+    // std::cout << "hidden_states shape: " 
+    //           << hidden_states.shape() << std::endl;
     auto position_embeds = wpe_.forward(position_ids);
-    std::cout << "position_embeds shape: " 
-              << position_embeds.shape() << std::endl;
+    // std::cout << "position_embeds shape: " 
+    //           << position_embeds.shape() << std::endl;
 
     hidden_states += position_embeds; // Add position embeddings
     for (size_t i = 0; i < num_layers_; ++i) {

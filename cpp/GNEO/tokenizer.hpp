@@ -49,11 +49,9 @@ class Tokenizer {
         token = token.substr(1, token.size() - 2);
       }
       // convert id_str to int
-      std::cout<< "Parsing token: " << token 
-                << ", id: " << id_str << std::endl;
+      // std::cout<< "Parsing token: " << token 
+      //           << ", id: " << id_str << std::endl;
       int id = std::stoi(id_str);
-
-     
       return {token, id};
     }
 
@@ -61,7 +59,8 @@ class Tokenizer {
       // open the vocab file and read the tokens
       std::ifstream file(vocab_file_);
       if (!file.is_open()) {
-        throw std::runtime_error("Could not open vocab file: " + vocab_file_);  
+        throw std::runtime_error(
+          "Could not open vocab file: " + vocab_file_);  
       }
 
       std::string line;
@@ -98,6 +97,13 @@ class Tokenizer {
       if (id < 0 || id >= static_cast<int>(id_to_token_.size())) {
         throw std::runtime_error("ID out of range: " + std::to_string(id));
       }
-      return id_to_token_[id];
+      std::string token_str = id_to_token_[id];
+      // replace special character Ġ with space
+      std::string target = "Ġ";
+      size_t pos;
+      while ((pos = token_str.find(target)) != std::string::npos) {
+          token_str.replace(pos, target.length(), " ");
+      }
+      return token_str;
     }
 };
