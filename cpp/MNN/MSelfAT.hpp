@@ -59,6 +59,7 @@ public:
 		auto attn_output = mtb::matmul(weights, v); 
 		
 		// transpose back to  [B, S, H, D]
+		// copy is making sure we have a contiguous tensor
 		attn_output = mtb::transpose(attn_output, {0, 2, 1, 3}).copy(); 
 	  
 		// reshape to [B, S, H * D]
@@ -98,13 +99,7 @@ protected:
 				mtb::ones<uint8_t>(
                     {scores.shape()[2], scores.shape()[3]}), 1);
 		
-		auto masked_scores = scores.copy();
-		for (size_t b = 0; b < scores.shape()[0]; ++b)
-			for (size_t h = 0; h < scores.shape()[1]; ++h)
-				for (size_t i = 0; i < scores.shape()[2]; ++i)
-					for (size_t j = 0; j < scores.shape()[3]; ++j)
-						if (mask_(i, j) == static_cast<uint8_t>(1))
-								masked_scores(b, h, i, j) = T(-INFINITY);
+		auto masked_scores = mtb::where(mask_, T(-INFINITY), scores);
 
 		return masked_scores;
 	}

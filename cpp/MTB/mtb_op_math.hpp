@@ -96,19 +96,57 @@ Tensor<T> concatenate(const std::vector<Tensor<T>> &tensors,
 
 // where function
 template <typename T>
-Tensor<T> where(const Tensor<bool> &condition, 
-                 const Tensor<T> &tensor, 
-                 T y) {
-    if (condition.shape() != tensor.shape()) {
-        throw std::invalid_argument(
-            "Condition and tensor must have the same shape");
-    }
-    Tensor<T> result(condition.shape());
+Tensor<T> where(const Tensor<uint8_t> &condition,
+                const T &y, 
+                const Tensor<T> &tensor){
+    // deep copy of tensor making sure it is contiguous
+    auto result = tensor.copy();
+
+    // broadcast the tensor to the new shape
+    // and make sure it is contiguous
+    auto cond_t = broadcast(
+        condition, 
+        tensor.shape() 
+    );
+    
+    auto shape = result.shape();
+
+    auto r_strides = result.strides();
+    auto c_strides = cond_t.strides();
+
     auto r_ptr = result.data().get();
-    auto t_ptr = tensor.data().get();
-    auto cond_ptr = condition.data().get();
-    for (size_t i = 0; i < condition.size(); ++i) {
-        r_ptr[i] = cond_ptr[i] ? t_ptr[i] : y;
+    auto c_ptr = cond_t.data().get();
+
+    const size_t ndim = shape.size();
+    const size_t total = std::accumulate(
+        shape.begin(), 
+        shape.end(), 
+        1, 
+        std::multiplies<size_t>()
+    );
+
+    std::vector<size_t> indexes(ndim, 0);
+
+    for (size_t i = 0; i < total; ++i) {
+        // convert i to index
+        size_t r_index = 0;
+        size_t c_index = 0;
+        for (size_t d = 0; d < ndim; ++d) {
+            r_index += indexes[d] * r_strides[d];
+            c_index += indexes[d] * c_strides[d];
+        }
+
+        // check the condition
+        if (c_ptr[c_index]) {
+            // if condition is true, set the value to y
+            r_ptr[r_index] = y;
+        }
+        // update the index
+        for (ssize_t d = ndim - 1; d >= 0; --d) {
+            if (++indexes[d] < shape[d]) break; 
+            // reset the index for this dimension
+            indexes[d] = 0; 
+        }
     }
     return result;
 }

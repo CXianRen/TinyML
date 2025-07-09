@@ -136,9 +136,9 @@ namespace mtb {
     template <typename T>
     Tensor<T> Tensor<T>::copy() const {
         Tensor c(shape_);
-        c.data_ = std::shared_ptr<T[]>(
-            new T[size_], 
-            std::default_delete<T[]>());
+        // c.data_ = std::shared_ptr<T[]>(
+        //     new T[size_], 
+        //     std::default_delete<T[]>());
         
         std::vector<size_t> index(shape_.size(), 0);
         for (size_t i = 0; i< size_; ++i){
