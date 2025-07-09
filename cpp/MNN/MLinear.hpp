@@ -7,12 +7,15 @@ namespace mnn {
 template <typename T>
 class MLinear {
     public:
-        MLinear(int in_features, int out_features, bool bias = true):
+        MLinear(size_t in_features, 
+                size_t out_features, 
+                bool bias = true):
+            has_bias_(bias),
             in_features_(in_features),
             out_features_(out_features),
-            has_bias_(bias),
             weight_({out_features_, in_features_}),
-            bias_(has_bias_ ? mtb::Tensor<T>({out_features_}) : mtb::Tensor<T>({1})){
+            bias_(has_bias_ ? mtb::Tensor<T>({out_features_}) 
+            : mtb::Tensor<T>({1})){
         }
 
         // Forward pass method
@@ -29,7 +32,7 @@ class MLinear {
             return output;  
         }
 
-        void fill_weight(T* data, int size) {
+        void fill_weight(T* data, size_t size) {
             // Fill weight tensor with provided data
             if (size != weight_.size()) {
                 throw std::runtime_error(
@@ -39,7 +42,7 @@ class MLinear {
                    weight_.size() * sizeof(T));
         }
 
-        void fill_bias(T* data, int size) {
+        void fill_bias(T* data, size_t size) {
             // Fill bias tensor with provided data
             if (!has_bias_) {
                 throw std::runtime_error(
@@ -55,8 +58,8 @@ class MLinear {
         
     private:
         bool has_bias_ = true;
-        int in_features_;
-        int out_features_;
+        size_t in_features_;
+        size_t out_features_;
 
         // Weight and bias tensors
         mtb::Tensor<T> weight_;

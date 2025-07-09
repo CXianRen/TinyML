@@ -188,13 +188,13 @@ public:
     auto wte_data = 
     load_data<T>(folder_path + 
       "/transformer/wte/weight/parameters.bin", 
-                 vocab_size_ * embed_dim_);
+                 vocab_size_ * embed_dim_, true);
     wte_.fill_weight(wte_data.data(), wte_data.size());
 
     auto wpe_data = 
     load_data<T>(folder_path + 
       "/transformer/wpe/weight/parameters.bin",
-                  2048 * embed_dim_);
+                  2048 * embed_dim_, true);
     wpe_.fill_weight(wpe_data.data(), wpe_data.size());
 
     // initialize layers
@@ -203,27 +203,27 @@ public:
       load_data<T>(folder_path + 
         "/transformer/h/" + std::to_string(i) + 
         "/attn/attention/k_proj/weight/parameters.bin", 
-                   embed_dim_ * embed_dim_);
+                   embed_dim_ * embed_dim_, true);
       auto v_data = 
       load_data<T>(folder_path + 
         "/transformer/h/" + std::to_string(i) + 
         "/attn/attention/v_proj/weight/parameters.bin", 
-                    embed_dim_ * embed_dim_);
+                    embed_dim_ * embed_dim_, true);
       auto q_data = 
       load_data<T>(folder_path + 
         "/transformer/h/" + std::to_string(i) + 
         "/attn/attention/q_proj/weight/parameters.bin",
-                   embed_dim_ * embed_dim_);
+                   embed_dim_ * embed_dim_, true);
       auto o_w_data = 
       load_data<T>(folder_path + 
         "/transformer/h/" + std::to_string(i) + 
         "/attn/attention/out_proj/weight/parameters.bin",
-                    embed_dim_ * embed_dim_);
+                    embed_dim_ * embed_dim_, true);
       auto o_b_data = 
       load_data<T>(folder_path + 
         "/transformer/h/" + std::to_string(i) + 
         "/attn/attention/out_proj/bias/parameters.bin",
-                   embed_dim_);
+                   embed_dim_, true);
       
       // initialize attention
       layers_[i].init_att(k_data.data(), k_data.size(),
@@ -236,21 +236,21 @@ public:
       auto c_fc_w_data = 
       load_data<T>(folder_path + "/transformer/h/" + std::to_string(i) + 
                    "/mlp/c_fc/weight/parameters.bin",
-                   embed_dim_ * (embed_dim_ * 4));
+                   embed_dim_ * (embed_dim_ * 4), true);
     
       auto c_fc_b_data = 
       load_data<T>(folder_path + "/transformer/h/" + std::to_string(i) + 
                    "/mlp/c_fc/bias/parameters.bin",
-                   embed_dim_ * 4);
+                   embed_dim_ * 4, true);
       
       auto c_proj_w_data = 
       load_data<T>(folder_path + "/transformer/h/" + std::to_string(i) + 
                    "/mlp/c_proj/weight/parameters.bin",\
-                    (embed_dim_ * 4) * embed_dim_);
+                    (embed_dim_ * 4) * embed_dim_, true);
       auto c_proj_b_data = 
       load_data<T>(folder_path + "/transformer/h/" + std::to_string(i) + 
                    "/mlp/c_proj/bias/parameters.bin",
-                   embed_dim_);
+                   embed_dim_, true);
       // initialize mlp
       layers_[i].init_mlp(c_fc_w_data.data(), c_fc_w_data.size(),
                           c_fc_b_data.data(), c_fc_b_data.size(),
@@ -261,17 +261,17 @@ public:
       // layer norm weights
       auto ln_1_w_data = 
       load_data<T>(folder_path + "/transformer/h/" + std::to_string(i) + 
-                   "/ln_1/weight/parameters.bin", embed_dim_);
+                   "/ln_1/weight/parameters.bin", embed_dim_, true);
       auto ln_1_b_data = 
       load_data<T>(folder_path + "/transformer/h/" + std::to_string(i) + 
-                   "/ln_1/bias/parameters.bin", embed_dim_);
+                   "/ln_1/bias/parameters.bin", embed_dim_, true);
 
       auto ln_2_w_data = 
       load_data<T>(folder_path + "/transformer/h/" + std::to_string(i) + 
-                   "/ln_2/weight/parameters.bin", embed_dim_);
+                   "/ln_2/weight/parameters.bin", embed_dim_, true);
       auto ln_2_b_data = 
       load_data<T>(folder_path + "/transformer/h/" + std::to_string(i) + 
-                   "/ln_2/bias/parameters.bin", embed_dim_); 
+                   "/ln_2/bias/parameters.bin", embed_dim_, true); 
       // initialize layer norm
       layers_[i].init_ln_1(ln_1_w_data.data(), ln_1_w_data.size(),
                            ln_1_b_data.data(), ln_1_b_data.size());
@@ -281,10 +281,10 @@ public:
     // final layer norm
     auto ln_f_w_data = 
     load_data<T>(folder_path + 
-      "/transformer/ln_f/weight/parameters.bin", embed_dim_);
+      "/transformer/ln_f/weight/parameters.bin", embed_dim_, true);
     auto ln_f_b_data = 
     load_data<T>(folder_path + 
-      "/transformer/ln_f/bias/parameters.bin", embed_dim_);
+      "/transformer/ln_f/bias/parameters.bin", embed_dim_, true);
     ln_f_.fill_gamma(ln_f_w_data.data(), ln_f_w_data.size());
     ln_f_.fill_beta(ln_f_b_data.data(), ln_f_b_data.size()); 
 
@@ -292,9 +292,8 @@ public:
     auto lm_head_w_data = 
     load_data<T>(folder_path + 
       "/lm_head/weight/parameters.bin", 
-                 embed_dim_ * vocab_size_);
+                 embed_dim_ * vocab_size_, true);
     lm_head_.fill_weight(lm_head_w_data.data(), lm_head_w_data.size());
-
   }
   
 };

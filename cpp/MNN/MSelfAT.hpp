@@ -9,9 +9,9 @@ namespace mnn {
 template <typename T>
 class MSelfAT {
 public:
-	MSelfAT(int embed_size, 
-			int num_attention_heads, 
-			int head_dim)
+	MSelfAT(size_t embed_size, 
+			size_t num_attention_heads, 
+			size_t head_dim)
 		: embed_size_(embed_size),
 		  num_attention_heads_(num_attention_heads),
 		  head_dim_(head_dim),
@@ -73,15 +73,15 @@ public:
 
 	}
 
-	void fill_k(T* data, int size) {
+	void fill_k(T* data, size_t size) {
 		k_proj_.fill_weight(data, size);
 	}
 
-	void fill_v(T* data, int size) {
+	void fill_v(T* data, size_t size) {
 		v_proj_.fill_weight(data, size);
 	}
 
-	void fill_q(T* data, int size) {
+	void fill_q(T* data, size_t size) {
 		q_proj_.fill_weight(data, size);
 	}
 
@@ -110,9 +110,9 @@ protected:
 	}
 	
 private:
-    int embed_size_;
-    int num_attention_heads_;
-    int head_dim_;
+    size_t embed_size_;
+    size_t num_attention_heads_;
+    size_t head_dim_;
 
 	MLinear<T> k_proj_;
 	MLinear<T> v_proj_;

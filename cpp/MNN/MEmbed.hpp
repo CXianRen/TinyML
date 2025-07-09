@@ -7,7 +7,7 @@ namespace mnn {
 template <typename T>
 class MEmbed {
     public:
-        MEmbed(int vocab_size, int embed_dim): 
+        MEmbed(size_t vocab_size, size_t embed_dim): 
             vocab_size_(vocab_size), 
             embed_dim_(embed_dim),
             weight_(mtb::Tensor<T>({vocab_size, embed_dim})) {
@@ -23,16 +23,15 @@ class MEmbed {
             }
 
             std::vector<mtb::Tensor<T>> output_tensors;
-            for (int i = 0; i < input.shape()[0]; ++i) {
-                for (int j = 0; j < input.shape()[1]; ++j) {
+            for (size_t i = 0; i < input.shape()[0]; ++i) {
+                for (size_t j = 0; j < input.shape()[1]; ++j) {
                     auto index = input(i, j);
-                    if (index < 0 || index >= vocab_size_) {
+                    if (index < 0 || 
+                        static_cast<size_t>(index) >= vocab_size_) {
                         throw std::runtime_error(
                             "Index out of bounds for embedding.");
                     }
                     auto sub_tensor = weight_[index];
-                    // std::cout << "sub_tensor shape: " 
-                    //           << sub_tensor.shape() << std::endl;
                     output_tensors.push_back(sub_tensor);
                 }
             }
@@ -44,7 +43,7 @@ class MEmbed {
                 {input.shape()[0], input.shape()[1], embed_dim_});
         }
 
-        void fill_weight(T* data, int size) {
+        void fill_weight(T* data, size_t size) {
             // Fill weight tensor with provided data
             if (size != weight_.size()) {
                 throw std::runtime_error(
@@ -55,8 +54,8 @@ class MEmbed {
         }
       
     private:
-        int vocab_size_;
-        int embed_dim_;
+        size_t vocab_size_;
+        size_t embed_dim_;
         // Weight and bias tensors
         mtb::Tensor<T> weight_;
 };

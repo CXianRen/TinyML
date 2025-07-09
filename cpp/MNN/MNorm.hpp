@@ -7,7 +7,7 @@ namespace mnn {
 template <typename T>
 class MLayerNorm {
     public:
-        MLayerNorm(int normalized_shape, float eps = 1e-5): 
+        MLayerNorm(size_t normalized_shape, double eps = 1e-5): 
             eps_(eps), normalized_shape_(normalized_shape),
             gamma_(mtb::ones<T>(
                 {normalized_shape})),
@@ -46,7 +46,7 @@ class MLayerNorm {
 
     private:
         double eps_;
-        int normalized_shape_;
+        size_t normalized_shape_;
         
         mtb::Tensor<T> gamma_;
         mtb::Tensor<T> beta_;
