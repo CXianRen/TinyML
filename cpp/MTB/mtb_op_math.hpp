@@ -33,65 +33,110 @@ Tensor<T> transpose(Tensor<T> &tensor, std::vector<size_t> axes) {
 
 // concatenate function
 template <typename T>
-Tensor<T> concatenate_dim0(const std::vector<Tensor<T>> &tensors) {
-    // concatenate tensors along dimension 0
-    // for fast concatenation,
-    if (tensors.empty()) {
-        throw std::invalid_argument("Input tensors cannot be empty");
-    }
+void __copy(const Tensor<T> &src, T* dst){
+    auto shape = src.shape();
+    auto strides = src.strides();
+    auto size = src.size();
 
-    // check if all tensors have the same shape except for the first dimension
-    size_t total_size = 0;
-    std::vector<size_t> shape = tensors[0].shape();
-    for (const auto &tensor : tensors) {
-        if (tensor.shape().size() != shape.size()) {
-            throw std::invalid_argument(
-                "All tensors must have the same number of dimensions");
-        }
-        for (size_t i = 1; i < shape.size(); ++i) {
-            if (tensor.shape()[i] != shape[i]) {
-                throw std::invalid_argument(
-                    "All tensors must have the same shape"\
-                    " except for the first dimension");
-            }
-        }
-        total_size += tensor.shape()[0];
-    }
+    auto src_ptr = src.data().get();
 
-    // create a new tensor with the concatenated shape
-    std::vector<size_t> new_shape = shape;
-    // set the first dimension to the total size
-    new_shape[0] = total_size; 
-    Tensor<T> result(new_shape);
-    // copy the data from each tensor into the result tensor
-    size_t offset = 0;
-    for (const auto &tensor : tensors) {
-        auto s_ptr = tensor.data().get();
-        auto d_ptr = result.data().get();
-        if(tensor.is_contiguous()){
-             // copy the data
-            memcpy(d_ptr + offset, 
-                   s_ptr, 
-                   tensor.size() * sizeof(T));
-            offset += tensor.size();
-        }else{
-            // unspported case
-            throw std::invalid_argument(
-                "Tensor is not contiguous, cannot concatenate");
+    std::vector<size_t> indexes(shape.size(), 0);
+
+    for(size_t i = 0; i < size; ++i) {
+        // convert i to index
+        size_t index = 0;
+        for (size_t d = 0; d < shape.size(); ++d) {
+            index += indexes[d] * strides[d];
+        }
+        // copy the data
+        dst[i] = src.data().get()[index];
+
+        // update the index
+        for (ssize_t d = shape.size() - 1; d >= 0; --d) {
+            if (++indexes[d] < shape[d]) break; 
+            // reset the index for this dimension
+            indexes[d] = 0; 
         }
     }
-    return result;
 }
 
 template <typename T>
-Tensor<T> concatenate(const std::vector<Tensor<T>> &tensors, 
+Tensor<T> concatenate(
+    const std::vector<Tensor<T>> &tensors, 
     int axis = 0) {
-    switch (axis) {
-        case 0:
-            return concatenate_dim0(tensors);
-        default:
-            throw std::invalid_argument("Unsupported axis for concatenation");
+        // check if all tensors have the same shape except for the concatenation axis
+    if (tensors.empty()) {
+        throw std::invalid_argument("Input tensors cannot be empty");
     }
+    
+    for (const auto &tensor : tensors) {
+        if (tensor.shape().size() != tensors[0].shape().size()) {
+            throw std::invalid_argument(
+                "All tensors must have the same number of dimensions");
+        }
+        for (size_t i = 0; i < tensor.shape().size(); ++i) {
+            if (i != static_cast<size_t>(axis) && 
+                tensor.shape()[i] != tensors[0].shape()[i]) {
+                throw std::invalid_argument(
+                    "All tensors must have the same shape"\
+                    " except for the concatenation axis");
+            }
+        }
+    }
+
+    // calculate the new shape
+    std::vector<size_t> new_shape = tensors[0].shape();
+    size_t total_size = 0;
+    for (const auto &tensor : tensors) {
+        total_size += tensor.shape()[axis];
+    }
+    new_shape[axis] = total_size;
+
+    // create a new tensor with the concatenated shape
+    Tensor<T> result(new_shape);
+
+    // [1, 2, 3], axis = 1 ndim_before_axis = 1 
+    size_t ndim_before_axis = new_shape.size()- 1 - axis;
+    size_t total_subtensor = 1;
+    for (size_t i = 0; i < ndim_before_axis; ++i) {
+        total_subtensor *= new_shape[i];
+    }
+
+    // split the tensors into subtensors according to the axis
+    // and store them in a vector in order to concatenate
+    std::vector<Tensor<T>> subtensors;
+    std::vector<size_t> indexes(ndim_before_axis, 0);
+    for (size_t i = 0; i < total_subtensor; ++i) {
+        // for each tensor
+        for(size_t j = 0; j < tensors.size(); ++j) {
+            // get the current tensor
+            auto tensor = tensors[j];
+            for (size_t d = 0; d < ndim_before_axis; ++d) {
+                // get the subtensor
+                tensor=tensor[indexes[d]]; 
+            }
+            // push the subtensor to the vector
+            subtensors.push_back(tensor);
+        }
+
+        // update the index
+        for (ssize_t d = ndim_before_axis - 1; d >= 0; --d) {
+            if (++indexes[d] < new_shape[d]) break; 
+            // reset the index for this dimension
+            indexes[d] = 0; 
+        }
+    }
+
+    // copy the data from each subtensor into the result tensor
+    size_t offset = 0;
+    auto r_ptr = result.data().get();
+    for (const auto &subtensor : subtensors) {
+        auto size = subtensor.size();
+        // copy the data
+        __copy(subtensor, r_ptr + offset);
+        offset += size;
+    }
+    return result;
 }
 
 // where function
