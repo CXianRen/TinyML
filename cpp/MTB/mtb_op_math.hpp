@@ -49,7 +49,7 @@ void __copy(const Tensor<T> &src, T* dst){
             index += indexes[d] * strides[d];
         }
         // copy the data
-        dst[i] = src.data().get()[index];
+        dst[i] = src_ptr[index];
 
         // update the index
         for (ssize_t d = shape.size() - 1; d >= 0; --d) {
@@ -64,7 +64,7 @@ template <typename T>
 Tensor<T> concatenate(
     const std::vector<Tensor<T>> &tensors, 
     int axis = 0) {
-        // check if all tensors have the same shape except for the concatenation axis
+    // check if all tensors have the same shape except for the concatenation axis
     if (tensors.empty()) {
         throw std::invalid_argument("Input tensors cannot be empty");
     }
@@ -95,21 +95,23 @@ Tensor<T> concatenate(
     // create a new tensor with the concatenated shape
     Tensor<T> result(new_shape);
 
-    // [1, 2, 3], axis = 1 ndim_before_axis = 1 
-    size_t ndim_before_axis = new_shape.size()- 1 - axis;
-    size_t total_subtensor = 1;
-    for (size_t i = 0; i < ndim_before_axis; ++i) {
-        total_subtensor *= new_shape[i];
-    }
+    // e.g. [1, 2, 3], axis = 1 ndim_before_axis = 1 
+    size_t ndim_before_axis = axis;
 
+    size_t total_subtensor = 1;
+    // calculate the total subtensor for this tensor
+    for (size_t d = 0; d < ndim_before_axis; ++d) {
+        total_subtensor *= new_shape[d];
+    }
+       
     // split the tensors into subtensors according to the axis
     // and store them in a vector in order to concatenate
     std::vector<Tensor<T>> subtensors;
     std::vector<size_t> indexes(ndim_before_axis, 0);
-    for (size_t i = 0; i < total_subtensor; ++i) {
-        // for each tensor
-        for(size_t j = 0; j < tensors.size(); ++j) {
-            // get the current tensor
+
+    for (size_t i = 0; i < total_subtensor; ++i) {  
+        // get the current tensor
+        for (size_t j = 0; j < tensors.size(); ++j) {
             auto tensor = tensors[j];
             for (size_t d = 0; d < ndim_before_axis; ++d) {
                 // get the subtensor
@@ -118,7 +120,7 @@ Tensor<T> concatenate(
             // push the subtensor to the vector
             subtensors.push_back(tensor);
         }
-
+       
         // update the index
         for (ssize_t d = ndim_before_axis - 1; d >= 0; --d) {
             if (++indexes[d] < new_shape[d]) break; 

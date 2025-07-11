@@ -47,6 +47,7 @@ void test_op_add() {
   );
   PASSLOG();
 }
+
 void test_op_sub() {
   START_TEST();
   test_op_template<std::minus<float>>("-", 
@@ -54,6 +55,7 @@ void test_op_sub() {
   );
   PASSLOG();
 }
+
 void test_op_mul() {
   START_TEST();
   test_op_template<std::multiplies<float>>("*", 
@@ -186,32 +188,38 @@ void test_transpose() {
 void test_concat() {
   START_TEST();
   {
-    TensorF t1({2, 3});
-    TensorF t2({2, 3});
+    TensorF t1({2, 3}, {
+      0.0f, 1.0f, 2.0f,
+      3.0f, 4.0f, 5.0f
+    });
+    TensorF t2({2, 3}, {
+      6.0f, 7.0f, 8.0f,
+      9.0f, 10.0f, 11.0f
+    });
+
+    float expect[12] = {
+      // Batch 0
+      0.0f, 1.0f, 2.0f,   // row 0
+      3.0f, 4.0f, 5.0f,   // row 1
+      6.0f, 7.0f, 8.0f,   // row 2 (from t2)
+      9.0f, 10.0f, 11.0f  // row 3 (from t2)
+    };
+
     std::cout << "t1 shape: " << t1.shape() << std::endl;
     std::cout << "t1 strides: " << t1.strides() << std::endl;
     std::cout << "size of t1: " << t1.size() << std::endl;
 
-    // Fill tensors with values
-    for (size_t i = 0; i < t1.size(); ++i) {
-      t1.data().get()[i] = static_cast<float>(i);
-      t2.data().get()[i] = static_cast<float>(i + 6); // offset by 6
-    }
-    
-    TensorF t_concat = mtb::concatenate<float>({t1, t2}, 0); // concatenate along first axis
+    // concatenate along first axis
+    TensorF t_concat = mtb::concatenate<float>({t1, t2}, 0); 
     if (!compare_vectors(t_concat.shape(), std::vector<size_t>{4, 3})) {
       throw std::runtime_error("Error: t_concat shape does not match expected shape after concat!");
     }
     
-    for (size_t i = 0; i < t_concat.shape()[0]; ++i) {
-      for (size_t j = 0; j < t_concat.shape()[1]; ++j) {
-        float expected_value = (i < 2) ? t1(i, j) : t2(i - 2, j);
-        if (t_concat(i, j) != expected_value) {
-          throw std::runtime_error("Error: t_concat(" + 
-            std::to_string(i) + 
-            ", " + std::to_string(j) + 
-            ") does not match expected value after concat!");
-        }
+    for (size_t i = 0; i < t_concat.size(); ++i) {
+      if (t_concat.data().get()[i] != expect[i]) {
+        throw std::runtime_error(
+          "Error: t_concat(" + std::to_string(i) + 
+          ") does not match expected value after concat!");
       }
     }
     
@@ -224,12 +232,14 @@ void test_concat() {
     TensorF t1({2, 2, 3}, {
       1.0f, 2.0f, 3.0f, 
       4.0f, 5.0f, 6.0f, 
+
       7.0f, 8.0f, 9.0f, 
       10.0f, 11.0f, 12.0f
     });
     TensorF t2({2, 2, 3}, {
       13.0f, 14.0f, 15.0f, 
       16.0f, 17.0f, 18.0f, 
+
       19.0f, 20.0f, 21.0f,
       22.0f, 23.0f, 24.0f
     });
@@ -252,6 +262,44 @@ void test_concat() {
     TensorF t_concat = mtb::concatenate<float>({t1, t2}, 1);
     if (!compare_vectors(t_concat.shape(), 
       std::vector<size_t>{2, 4, 3})) {
+      throw std::runtime_error(
+        "Error: t_concat shape does not match expected shape after concat!");
+    }
+    for (size_t i = 0; i < t_concat.size(); ++i) {
+      if (t_concat.data().get()[i] != expect[i]) {
+        throw std::runtime_error(
+          "Error: t_concat(" + std::to_string(i) + 
+          ") does not match expected value after concat!");
+      }
+    }
+  }
+  {
+    TensorF t1({1, 2, 2, 2}, {
+      1.0f, 2.0f, 
+      3.0f, 4.0f,
+
+      5.0f, 6.0f, 
+      7.0f, 8.0f
+    });
+
+    TensorF t2({1, 2, 1, 2}, {
+      9.0f, 10.0f, 
+      11.0f, 12.0f
+    });
+
+    TensorF t_concat = mtb::concatenate<float>({t1, t2}, 2);
+
+    float expect[16] = {
+      1.0, 2.0,
+      3.0, 4.0,
+      9.0, 10.0,
+
+      5.0, 6.0,
+      7.0, 8.0,
+      11.0, 12.0
+    };
+
+    if (!compare_vectors(t_concat.shape(), std::vector<size_t>{1, 2, 3, 2})) {
       throw std::runtime_error(
         "Error: t_concat shape does not match expected shape after concat!");
     }
@@ -479,12 +527,16 @@ int main(int argc, char** argv) {
   test_sum();
   test_mean();
   test_var();
+  test_softmax();
 
+  //
   test_exp();
   test_sqrt();
   test_tanh();
 
   // 
-  test_softmax();
+  test_transpose();
+  test_concat();
+
   return 0;
 }

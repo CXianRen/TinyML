@@ -1,5 +1,6 @@
 #!/bin/bash 
 set -e
+mkdir -p build/test/temp
 
 ./build/MTB/test/test_basic
 

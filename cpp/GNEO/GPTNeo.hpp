@@ -21,8 +21,10 @@ public:
       attention_(embed_dim, 16, embed_dim/16) {
   }
 
-  Tensor<T> forward(const Tensor<T>& hidden_states){
-    return attention_.forward(hidden_states);
+  Tensor<T> forward(const Tensor<T>& hidden_states,
+                    mtb::Tensor<T>* k_history = nullptr, 
+                    mtb::Tensor<T>* v_history = nullptr) {
+    return attention_.forward(hidden_states, k_history, v_history);
   }
 
   void init_att(T* k, size_t k_size,
@@ -90,10 +92,12 @@ public:
       ln_2_(embed_dim, 1e-5),
       mlp_(embed_dim, embed_dim * 4) {}
         
-  Tensor<T> forward(const Tensor<T>& hidden_states) {
+  Tensor<T> forward(const Tensor<T>& hidden_states,
+  									mtb::Tensor<T>* k_history=nullptr, 
+										mtb::Tensor<T>* v_history=nullptr) {
     auto residual = hidden_states.copy();
     auto x = ln_1_.forward(hidden_states);
-    x = attention_.forward(x);
+    x = attention_.forward(x, k_history, v_history);
     x += residual; // Add residual connection
     
     residual = x.copy();
@@ -164,17 +168,24 @@ public:
   }
 
   Tensor<T> forward(const Tensor<int>& input_ids, 
-                    const Tensor<int>& position_ids) {
+                    const Tensor<int>& position_ids,
+                    std::vector<Tensor<T>>* k_history = nullptr,
+                    std::vector<Tensor<T>>* v_history = nullptr) {
     auto hidden_states = wte_.forward(input_ids);
-    // std::cout << "hidden_states shape: " 
-    //           << hidden_states.shape() << std::endl;
     auto position_embeds = wpe_.forward(position_ids);
-    // std::cout << "position_embeds shape: " 
-    //           << position_embeds.shape() << std::endl;
 
     hidden_states += position_embeds; // Add position embeddings
     for (size_t i = 0; i < num_layers_; ++i) {
-      hidden_states = layers_[i].forward(hidden_states);
+      if (k_history != nullptr && v_history != nullptr) 
+      {
+        // If k_history and v_history are provided, pass them to the attention layer
+        hidden_states = layers_[i].forward(hidden_states, 
+                                           &((*k_history)[i]), 
+                                           &((*v_history)[i]));
+      } else {
+        // Otherwise, just forward the hidden states
+        hidden_states = layers_[i].forward(hidden_states);
+      }
     }
     
     hidden_states = ln_f_.forward(hidden_states);

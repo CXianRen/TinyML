@@ -1,5 +1,6 @@
 #!/bin/bash 
 set -e
+mkdir -p build/test/temp
 
 python MNN/test/test_linear.py
 ./build/MNN/test/test_linear

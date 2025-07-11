@@ -18,8 +18,10 @@ public:
 		  k_proj_(embed_size_, embed_size_, false),
 		  v_proj_(embed_size_, embed_size_, false),
 		  q_proj_(embed_size_, embed_size_, false),
-		  out_proj_(embed_size_, embed_size_)
-		{}
+		  out_proj_(embed_size_, embed_size_),
+			mask_(mtb::triu<uint8_t>(
+							mtb::ones<uint8_t>(
+								{256, 256}), 1)) {}
 	
 	mtb::Tensor<T> split_head(mtb::Tensor<T>& input) {
 		// split the input tensor into multiple heads
@@ -31,7 +33,10 @@ public:
 		return mtb::transpose(reshaped, {0, 2, 1, 3});
 	}
 
-	mtb::Tensor<T> forward(const mtb::Tensor<T>& input) {
+	mtb::Tensor<T> forward(const mtb::Tensor<T>& input,
+												  mtb::Tensor<T>* k_history=nullptr, 
+													mtb::Tensor<T>* v_history=nullptr) 
+		{
 		// project input to query, key, and value
 		// intput [B, S, E] -> q, k, v [B, S, E]
 		auto q = q_proj_.forward(input);
@@ -39,17 +44,35 @@ public:
 		auto v = v_proj_.forward(input);
 
 		// split the tensors into multiple heads
-		// [B, S, E] -> [B, S, H, D]
+		// [B, S, E] -> [B, H, S, D]
 		q = split_head(q);
 		k = split_head(k);
 		v = split_head(v);
+
+		if (k_history != nullptr && v_history != nullptr) {
+			// if k and v history are provided, append the new k and v
+			// [B, H, S, D] -> [B, H, S + S', D]
+			if (k_history->shape().size() != 1 && 
+					v_history->shape().size() != 1) {
+					k = mtb::concatenate(std::vector<mtb::Tensor<T>>({*k_history, k}), 2);
+					v = mtb::concatenate(std::vector<mtb::Tensor<T>>({*v_history, v}), 2);
+			}
+			// update the history tensors
+			*k_history = k;
+			*v_history = v;
+		}
 
 		// calculate attention scores
 		// [B, H, S, D] * [B, H, D, S] -> [B, H, S, S]
 		auto scores = mtb::matmul(q, mtb::transpose(k, {0, 1, 3, 2}));
 
 		// apply mask
-		auto scores_masked = apply_mask(scores);
+		size_t q_len = q.shape()[2];
+		size_t k_len = k.shape()[2];
+	  // maks[k_len-q_len:k_len, :k_len] 
+		// only when the k_ken-q_len > 1, the mask is required
+		auto mask = mask_.slice({{k_len-q_len, k_len}, {0, k_len}});
+		auto scores_masked = mtb::where(mask, T(-INFINITY), scores);
 
 		// softmax along the last dimension
 		auto weights = mtb::softmax(scores_masked, -1); 
@@ -90,19 +113,6 @@ public:
 		out_proj_.fill_weight(weights, w_size);
 		out_proj_.fill_bias(bias, b_size);
 	}
-
-protected:
-	mtb::Tensor<T> apply_mask(const mtb::Tensor<T>& scores) {
-		// apply the mask to the scores
-		// scores [B, H, S, S] * mask [S, S] -> [B, H, S, S]
-		auto mask_ = mtb::triu<uint8_t>(
-				mtb::ones<uint8_t>(
-                    {scores.shape()[2], scores.shape()[3]}), 1);
-		
-		auto masked_scores = mtb::where(mask_, T(-INFINITY), scores);
-
-		return masked_scores;
-	}
 	
 private:
     size_t embed_size_;
@@ -113,6 +123,8 @@ private:
 	MLinear<T> v_proj_;
 	MLinear<T> q_proj_;
 	MLinear<T> out_proj_;
+
+	mtb::Tensor<uint8_t> mask_;
 };
 
 } // namespace mnn
