@@ -141,3 +141,7 @@ b = b = a[1:2:6, 1:2:3] // share
 2. they should be same at all dimension except the concat one.
 3. same type.
 
+# without op
+8.576 s
+
+# with it op

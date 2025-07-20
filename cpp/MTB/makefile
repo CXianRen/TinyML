@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -std=c++17 -O3 -Wall -Wfatal-errors
+CXXFLAGS = -std=c++17 -O3 -Wall -Wfatal-errors -fopenmp -march=native
 
 # should be set by its' parent makefile
 ifeq ($(BUILD_DIR),)

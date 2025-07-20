@@ -3,9 +3,45 @@
 #include "tensor.hpp"
 #include "mtb_bc.hpp"
 #include "mtb_op_math.hpp"
+
+#include <omp.h>
+
 namespace mtb {
 
 // matmul function 2D
+// template <typename T>
+// void _GEMM(const Tensor<T>& a, const Tensor<T>& b, T* data){
+//     // a: [M, N], b: [N, K] -> result: [M, K]
+ 
+//     size_t M = a.shape()[0];
+//     size_t N = a.shape()[1];
+//     size_t K = b.shape()[1];
+
+//     size_t a_stride0 = a.strides()[0];
+//     size_t a_stride1 = a.strides()[1];
+//     size_t b_stride0 = b.strides()[0];
+//     size_t b_stride1 = b.strides()[1];
+
+//     auto a_ptr = a.data().get();
+//     auto b_ptr = b.data().get();
+
+//     // Initialize the result tensor
+//     for (size_t i = 0; i < M; ++i) {
+//         for (size_t j = 0; j < K; ++j) {
+//             double sum = 0.0;
+//             for (size_t k = 0; k < N; ++k) {
+//                 // data[i * K + j] += 
+//                 //     a_ptr[i * a_stride0 + k * a_stride1] * 
+//                 //     b_ptr[k * b_stride0 + j * b_stride1];
+//                 sum += a_ptr[i * a_stride0 + k * a_stride1]* 
+//                        b_ptr[k * b_stride0 + j * b_stride1];
+//             }
+//             // Store the result in the output data pointer
+//             data[i * K + j] = static_cast<T>(sum);
+//         }
+//     }
+// }
+
 template <typename T>
 void _GEMM(const Tensor<T>& a, const Tensor<T>& b, T* data){
     // a: [M, N], b: [N, K] -> result: [M, K]
@@ -23,21 +59,84 @@ void _GEMM(const Tensor<T>& a, const Tensor<T>& b, T* data){
     auto b_ptr = b.data().get();
 
     // Initialize the result tensor
+    #pragma omp parallel for collapse(2)
     for (size_t i = 0; i < M; ++i) {
         for (size_t j = 0; j < K; ++j) {
-            double sum = 0.0;
             for (size_t k = 0; k < N; ++k) {
-                // data[i * K + j] += 
-                //     a_ptr[i * a_stride0 + k * a_stride1] * 
-                //     b_ptr[k * b_stride0 + j * b_stride1];
-                sum += double(a_ptr[i * a_stride0 + k * a_stride1]) * 
-                       double(b_ptr[k * b_stride0 + j * b_stride1]);
+                data[i * K + j] += 
+                        a_ptr[i * a_stride0 + k * a_stride1]* 
+                        b_ptr[k * b_stride0 + j * b_stride1];
             }
-            // Store the result in the output data pointer
-            data[i * K + j] = static_cast<T>(sum);
         }
     }
 }
+
+
+// template <typename T>
+// void _GEMM(const Tensor<T>& a, const Tensor<T>& b, T* data){
+//     // a: [M, N], b: [N, K] -> result: [M, K]
+ 
+//     size_t M = a.shape()[0];
+//     size_t N = a.shape()[1];
+//     size_t K = b.shape()[1];
+
+//     size_t a_stride0 = a.strides()[0];
+//     size_t a_stride1 = a.strides()[1];
+//     size_t b_stride0 = b.strides()[0];
+//     size_t b_stride1 = b.strides()[1];
+
+//     auto a_ptr = a.data().get();
+//     auto b_ptr = b.data().get();
+
+//     // Initialize the result tensor
+//     for (size_t i = 0; i < M; ++i) {
+//         for (size_t j = 0; j < K; ++j) {
+//             double sum = 0.0;
+//             size_t a_offset = i * a_stride0;
+//             size_t b_offset = j * b_stride1;
+
+//             for (size_t k = 0; k < N; ++k) {
+//                 sum += a_ptr[a_offset] *
+//                        b_ptr[b_offset];
+//                 // Move to the next element in a and b
+//                 a_offset += a_stride1; // Move to the next column in a
+//                 b_offset += b_stride0; // Move to the next row in b
+//             }
+
+//             // Store the result in the output data pointer
+//             data[i * K + j] = static_cast<T>(sum);
+//         }
+//     }
+// }
+
+
+// template <typename T>
+// void _GEMM(const Tensor<T>& a, const Tensor<T>& b, T* data){
+//     // a: [M, N], b: [N, K] -> result: [M, K]
+ 
+//     size_t M = a.shape()[0];
+//     size_t N = a.shape()[1];
+//     size_t K = b.shape()[1];
+
+//     size_t a_stride0 = a.strides()[0];
+//     size_t a_stride1 = a.strides()[1];
+//     size_t b_stride0 = b.strides()[0];
+//     size_t b_stride1 = b.strides()[1];
+
+//     auto a_ptr = a.data().get();
+//     auto b_ptr = b.data().get();
+
+//     // Initialize the result tensor
+//     for (size_t i = 0; i < M; ++i) {
+//         for (size_t k = 0; k < N; ++k) {
+//             for (size_t j = 0; j < K; ++j) {
+//                 data[i * K + j] += 
+//                     a_ptr[i * a_stride0 + k * a_stride1] * 
+//                     b_ptr[k * b_stride0 + j * b_stride1];
+//             }
+//         }
+//     }
+// }
 
 std::vector<std::vector<size_t>> 
 generate_batch_indices(

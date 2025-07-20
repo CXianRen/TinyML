@@ -1,7 +1,7 @@
 #include "test_common.hpp"
 #include "GPTNeo.hpp"
 #include "tokenizer.hpp"
-
+#include <chrono>
 using namespace mnn;
 using namespace mtb;
 
@@ -40,6 +40,9 @@ void test_generation(){
         Tensor<FP_T>({1}),
     };
 
+    // measure the time taken for generation
+    auto start_time = std::chrono::high_resolution_clock::now();
+
     for (size_t i = 5; i < max_length; ++i) {
         Tensor<int> input_ids({1, input_ids_raw.size()}, input_ids_raw);
         Tensor<int> position_ids({1, position_ids_raw.size()}, position_ids_raw);
@@ -64,9 +67,15 @@ void test_generation(){
         position_ids_raw.push_back(i);
         std::cout << next_token_str << std::flush;
     }
+    auto end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = end_time - start_time;
+
     std::cout << std::endl;
-    std::cout << "Generation completed. max length: " 
+    std::cout << "\n Generation completed. max length: " 
     << max_length << std::endl;
+    std::cout << "Time taken for generation: " 
+              << elapsed.count() << " seconds." << std::endl;
+
 }
 
 int main(int argc, char** argv) {
