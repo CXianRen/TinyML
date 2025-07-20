@@ -17,7 +17,7 @@ void test_generation(){
     tokenizer.parse_vocab();
     std::vector<int> input_ids_raw({7454,2402,257,640,11});
     std::vector<int> position_ids_raw( {0,1,2,3,4});
-    size_t max_length = 100;
+    size_t max_length = 105;
     
     //print the input tokens
     std::cout << "Input tokens:" << std::endl;
@@ -74,7 +74,7 @@ void test_generation(){
     std::cout << "\n Generation completed. max length: " 
     << max_length << std::endl;
     std::cout << "Time taken for generation: " 
-              << elapsed.count() << " seconds." << std::endl;
+              << 100.f /elapsed.count() << " token per second." << std::endl;
 
 }
 

@@ -14,7 +14,7 @@ myModel.load("../model_state_dict")  # load the model state dict
 
 print("Model loaded.")
 
-def greedy_generate_no_cache(model, tokenizer, input_ids, max_new_tokens=100):
+def greedy_generate(model, tokenizer, input_ids, max_new_tokens=100):
     # numpy version
     generated = input_ids
     cache = {}
@@ -42,7 +42,7 @@ def greedy_generate_no_cache(model, tokenizer, input_ids, max_new_tokens=100):
             break
         # print("output:", tokenizer.decode(next_token.item(), skip_special_tokens=True))
         # print("cache size:", cache[0][0].shape)
-        print(tokenizer.decode([next_token.item()]), end=' ', flush=True)
+        print(tokenizer.decode([next_token.item()]), end='', flush=True)
     print() 
     return generated
 
@@ -52,7 +52,7 @@ input_ids = input_ids.astype(np.int64)  # ensure the type is int64 for numpy
 
 import time
 start_time = time.time()
-generated_ids = greedy_generate_no_cache(myModel, tokenizer, input_ids, max_new_tokens=200)
+generated_ids = greedy_generate(myModel, tokenizer, input_ids, max_new_tokens=100)
 end_time = time.time()
-print(f"Average time per token: {(end_time - start_time) / 20:.4f} seconds")
+print(f"Average token per second: {100 / (end_time - start_time):.2f}")
 # print(generated_ids)

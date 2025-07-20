@@ -86,4 +86,5 @@ class MiniTokenizer:
         text = ''.join(tokens)
         # replace the special token 'Ġ' with space
         text = text.replace('Ġ', ' ')
-        return text.strip()
+        text = text.replace('Ċ', '\n')  # handle new line if needed
+        return text
