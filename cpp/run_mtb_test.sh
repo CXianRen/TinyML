@@ -10,6 +10,10 @@ mkdir -p build/test/temp
 
 ./build/MTB/test/test_math
 
+./build/MTB/test/test_math_transpose
+./build/MTB/test/test_math_concat
+
+
 ./build/MTB/test/test_matmul
 
 bash ./MTB/test/test_matmul_ext.sh
