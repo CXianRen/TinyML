@@ -98,11 +98,19 @@ class Tokenizer {
         throw std::runtime_error("ID out of range: " + std::to_string(id));
       }
       std::string token_str = id_to_token_[id];
-      // replace special character Ġ with space
-      std::string target = "Ġ";
-      size_t pos;
-      while ((pos = token_str.find(target)) != std::string::npos) {
-          token_str.replace(pos, target.length(), " ");
+      // replace special character Ġ with space, Ċ with "\n" ĉ with "\t"
+      static const std::map<std::string, std::string> replacements = {
+          {"Ġ", " "},
+          {"Ċ", "\n"},
+          {"ĉ", "\t"}
+      };
+
+      for (const auto& [from, to] : replacements) {
+        size_t pos = 0;
+        while ((pos = token_str.find(from, pos)) != std::string::npos) {
+            token_str.replace(pos, from.length(), to);
+            pos += to.length();
+        }
       }
       return token_str;
     }

@@ -1,12 +1,11 @@
 #pragma once
 
 #include "tensor.hpp"
-#include "mtb_bc.hpp"
-#include "mtb_builder.hpp"
 namespace mtb {
 
 template <typename T, typename F>
-Tensor<T> unary_elementwise(const Tensor<T> &tensor, F func, const char* opname) {
+Tensor<T> unary_elementwise(const Tensor<T> &tensor, 
+    F func, const char* opname) {
     if (tensor.shape().empty()) {
         throw std::invalid_argument(
             "Tensor must have at least one dimension");
