@@ -18,3 +18,7 @@ $(SUBDIRS):
 # clean all modules
 clean:
 	rm -rf $(BUILD_DIR)
+
+run:
+	export OMP_NUM_THREADS=8
+	./build/GNEO/test/test_gptneo_all_wh

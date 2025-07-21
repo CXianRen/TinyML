@@ -1,11 +1,12 @@
 #ifndef __MLinear_HPP__
 #define __MLinear_HPP__
 #include "mtb.hpp"
+#include "Mmodel.hpp"
 
 namespace mnn {
 
 template <typename T>
-class MLinear {
+class MLinear: public MModel {
     public:
         MLinear(size_t in_features, 
                 size_t out_features, 
@@ -16,6 +17,7 @@ class MLinear {
             weight_({out_features_, in_features_}),
             bias_(has_bias_ ? mtb::Tensor<T>({out_features_}) 
             : mtb::Tensor<T>({1})){
+            MACRO_CLASS_NAME(MLinear);
         }
 
         // Forward pass method
@@ -55,7 +57,20 @@ class MLinear {
             memcpy(bias_.data().get(), data, 
                    bias_.size() * sizeof(T));
         }
-        
+      
+        void printInfo(size_t indent = 0) const override {
+            std::cout << std::string(indent, ' ') 
+                      << "(" << name_ << ") : " 
+                      << type_ << " (in_features: " 
+                      << in_features_ 
+                      << ", out_features: " 
+                      << out_features_  
+                      << ", has_bias: "
+                      << (has_bias_ ? "true" : "false")
+                      <<
+                      ")" << std::endl;
+        }
+
     private:
         bool has_bias_ = true;
         size_t in_features_;

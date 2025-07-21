@@ -1,13 +1,16 @@
 #ifndef __MActivation_HPP__
 #define __MActivation_HPP__
 #include "mtb.hpp"
+#include "Mmodel.hpp"
 
 namespace mnn {
 
 template <typename T>
-class MGELUActivation {
+class MGELUActivation: public MModel {
     public:
-        MGELUActivation() = default;
+        MGELUActivation() {
+            MACRO_CLASS_NAME(MGELUActivation);
+        }
         
         // Forward pass method
         mtb::Tensor<T> forward(const mtb::Tensor<T>& x) {
@@ -25,7 +28,13 @@ class MGELUActivation {
             out *= x;
             out *= 0.5; // 0.5 * x * (1 + tanh(...))
             return out; // GELU(x)
-        }       
+        } 
+
+        void printInfo(size_t indent = 0) const override {
+            std::cout << std::string(indent, ' ') 
+                      << "(" << name_ << ") :" <<
+                        " MGELUActivation()" << std::endl;
+        }
 };
 
 } // namespace mnn

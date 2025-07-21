@@ -31,7 +31,7 @@ MNN_HPP_FILES := $(wildcard $(MNN_SRC)/*.hpp)
 GNEO_HPP_FILES := $(wildcard $(SRC_DIR)/*.hpp)
 INCLUDE_FILES := $(MTB_HPP_FILES) $(MNN_HPP_FILES) $(GNEO_HPP_FILES)
 
-all: test
+all: test 
 
 test: $(TEST_TARGETS)
 

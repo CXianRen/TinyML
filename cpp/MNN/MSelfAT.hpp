@@ -7,7 +7,19 @@
 namespace mnn {
 
 template <typename T>
-class MSelfAT {
+class MSelfAT: public MModel {
+private:
+    size_t embed_size_;
+    size_t num_attention_heads_;
+    size_t head_dim_;
+
+	MLinear<T> k_proj_;
+	MLinear<T> v_proj_;
+	MLinear<T> q_proj_;
+	MLinear<T> out_proj_;
+
+	mtb::Tensor<uint8_t> mask_;
+
 public:
 	MSelfAT(size_t embed_size, 
 			size_t num_attention_heads, 
@@ -21,7 +33,13 @@ public:
 		  out_proj_(embed_size_, embed_size_),
 			mask_(mtb::triu<uint8_t>(
 							mtb::ones<uint8_t>(
-								{256, 256}), 1)) {}
+								{256, 256}), 1)) {
+			MACRO_CLASS_NAME(MSelfAT);
+			MACRO_REGISTER_M_MEMEBR(k_proj_);
+			MACRO_REGISTER_M_MEMEBR(v_proj_);
+			MACRO_REGISTER_M_MEMEBR(q_proj_);
+			MACRO_REGISTER_M_MEMEBR(out_proj_);
+		}
 	
 	mtb::Tensor<T> split_head(mtb::Tensor<T>& input) {
 		// split the input tensor into multiple heads
@@ -113,18 +131,7 @@ public:
 		out_proj_.fill_weight(weights, w_size);
 		out_proj_.fill_bias(bias, b_size);
 	}
-	
-private:
-    size_t embed_size_;
-    size_t num_attention_heads_;
-    size_t head_dim_;
 
-	MLinear<T> k_proj_;
-	MLinear<T> v_proj_;
-	MLinear<T> q_proj_;
-	MLinear<T> out_proj_;
-
-	mtb::Tensor<uint8_t> mask_;
 };
 
 } // namespace mnn

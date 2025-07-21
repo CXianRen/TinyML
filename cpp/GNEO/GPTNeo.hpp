@@ -1,14 +1,12 @@
-#include "MLinear.hpp"
-#include "MEmbed.hpp"
-#include "MActivation.hpp"
-#include "MNorm.hpp"
-#include "MSelfAT.hpp"
+#pragma once
+#include "mnn.hpp"
+#include <memory>
 
 using namespace mtb;
 using namespace mnn;
 
 template<typename T>
-class GPTNeoAttention {
+class GPTNeoAttention: public MModel {
 private:
   size_t layer_id_;
   size_t embed_dim_; 
@@ -19,6 +17,8 @@ public:
       : layer_id_(layer_id), 
       embed_dim_(embed_dim),
       attention_(embed_dim, 16, embed_dim/16) {
+    MACRO_CLASS_NAME(GPTNeoAttention);
+    MACRO_REGISTER_M_MEMEBR(attention_);
   }
 
   Tensor<T> forward(const Tensor<T>& hidden_states,
@@ -40,7 +40,7 @@ public:
 };
 
 template<typename T>
-class GPTNeoMLP {
+class GPTNeoMLP: public MModel {
 private:
   size_t embed_dim_;
   size_t inermediate_dim_;
@@ -54,7 +54,12 @@ public:
       inermediate_dim_(inermediate_dim),
       c_fc_(embed_dim, inermediate_dim, true),
       c_proj_(inermediate_dim, embed_dim, true),
-      act_() {}
+      act_() {
+    MACRO_CLASS_NAME(GPTNeoMLP);
+    MACRO_REGISTER_M_MEMEBR(c_fc_);
+    MACRO_REGISTER_M_MEMEBR(c_proj_);
+    MACRO_REGISTER_M_MEMEBR(act_);
+  }
 
   Tensor<T> forward(const Tensor<T>& hidden_states) {
     auto x = c_fc_.forward(hidden_states);
@@ -76,7 +81,7 @@ public:
 
 
 template<typename T>
-class GPTNeoBlock {
+class GPTNeoBlock: public MModel {
 private:
   size_t layer_id_;
   MLayerNorm<T> ln_1_;
@@ -90,7 +95,14 @@ public:
       ln_1_(embed_dim, 1e-5),
       attention_(embed_dim, layer_id),
       ln_2_(embed_dim, 1e-5),
-      mlp_(embed_dim, embed_dim * 4) {}
+      mlp_(embed_dim, embed_dim * 4) {
+
+    MACRO_CLASS_NAME(GPTNeoBlock);
+    MACRO_REGISTER_M_MEMEBR(ln_1_);
+    MACRO_REGISTER_M_MEMEBR(attention_);
+    MACRO_REGISTER_M_MEMEBR(ln_2_);
+    MACRO_REGISTER_M_MEMEBR(mlp_);
+  }
         
   Tensor<T> forward(const Tensor<T>& hidden_states,
   									mtb::Tensor<T>* k_history=nullptr, 
@@ -140,21 +152,21 @@ public:
 };
 
 template<typename T>
-class GPTNeoModel {
+class GPTNeoModel: public MModel {
 private:
   size_t num_layers_;
   size_t embed_dim_;
   size_t vocab_size_;
   MEmbed<T> wte_;
   MEmbed<T> wpe_;
-  std::vector<GPTNeoBlock<T>> layers_;
+  std::vector<std::unique_ptr<GPTNeoBlock<T>>> layers_;
   MLayerNorm<T> ln_f_;
   MLinear<T> lm_head_;
 public:
   GPTNeoModel(size_t num_layers, 
               size_t embed_dim, 
-              size_t vocab_size=50257)
-      : num_layers_(num_layers),
+              size_t vocab_size=50257):
+        num_layers_(num_layers),
         embed_dim_(embed_dim),
         vocab_size_(vocab_size),
         wte_(vocab_size, embed_dim),
@@ -162,9 +174,18 @@ public:
         layers_(), // Initialize layers as an empty vector
         ln_f_(embed_dim, 1e-5),
         lm_head_(embed_dim, vocab_size, false) {
-    for (size_t i = 0; i < num_layers; ++i) {
-      layers_.emplace_back(embed_dim, i);
+    for (size_t i = 0; i < 4; ++i) {
+      layers_.emplace_back(std::make_unique<GPTNeoBlock<T>>(embed_dim, i));
     }
+
+    MACRO_CLASS_NAME(GPTNeoModel);
+    MACRO_REGISTER_M_MEMEBR(wte_);
+    MACRO_REGISTER_M_MEMEBR(wpe_);
+    // Register first layer as representative
+    MACRO_REGISTER_M_MEMEBR((*(layers_[0].get()))); 
+    MACRO_REGISTER_M_MEMEBR(ln_f_);
+    MACRO_REGISTER_M_MEMEBR(lm_head_);
+    printInfo();
   }
 
   Tensor<T> forward(const Tensor<int>& input_ids, 
@@ -179,12 +200,12 @@ public:
       if (k_history != nullptr && v_history != nullptr) 
       {
         // If k_history and v_history are provided, pass them to the attention layer
-        hidden_states = layers_[i].forward(hidden_states, 
+        hidden_states = layers_[i]->forward(hidden_states, 
                                            &((*k_history)[i]), 
                                            &((*v_history)[i]));
       } else {
         // Otherwise, just forward the hidden states
-        hidden_states = layers_[i].forward(hidden_states);
+        hidden_states = layers_[i]->forward(hidden_states);
       }
     }
     
@@ -237,7 +258,7 @@ public:
                    embed_dim_, true);
       
       // initialize attention
-      layers_[i].init_att(k_data.data(), k_data.size(),
+      layers_[i]->init_att(k_data.data(), k_data.size(),
                           v_data.data(), v_data.size(),
                           q_data.data(), q_data.size(),
                           o_w_data.data(), o_w_data.size(),
@@ -263,7 +284,7 @@ public:
                    "/mlp/c_proj/bias/parameters.bin",
                    embed_dim_, true);
       // initialize mlp
-      layers_[i].init_mlp(c_fc_w_data.data(), c_fc_w_data.size(),
+      layers_[i]->init_mlp(c_fc_w_data.data(), c_fc_w_data.size(),
                           c_fc_b_data.data(), c_fc_b_data.size(),
                           c_proj_w_data.data(), c_proj_w_data.size(),
                           c_proj_b_data.data(), c_proj_b_data.size());
@@ -284,9 +305,9 @@ public:
       load_data<T>(folder_path + "/transformer/h/" + std::to_string(i) + 
                    "/ln_2/bias/parameters.bin", embed_dim_, true); 
       // initialize layer norm
-      layers_[i].init_ln_1(ln_1_w_data.data(), ln_1_w_data.size(),
+      layers_[i]->init_ln_1(ln_1_w_data.data(), ln_1_w_data.size(),
                            ln_1_b_data.data(), ln_1_b_data.size());
-      layers_[i].init_ln_2(ln_2_w_data.data(), ln_2_w_data.size(),
+      layers_[i]->init_ln_2(ln_2_w_data.data(), ln_2_w_data.size(),
                            ln_2_b_data.data(), ln_2_b_data.size()); 
     }
     // final layer norm

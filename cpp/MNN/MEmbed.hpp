@@ -1,16 +1,17 @@
 #ifndef __MEmbed_HPP__
 #define __MEmbed_HPP__
 #include "mtb.hpp"
-
+#include "Mmodel.hpp"
 namespace mnn {
 
 template <typename T>
-class MEmbed {
+class MEmbed: public MModel {
     public:
-        MEmbed(size_t vocab_size, size_t embed_dim): 
+        MEmbed(size_t vocab_size, size_t embed_dim):
             vocab_size_(vocab_size), 
             embed_dim_(embed_dim),
             weight_(mtb::Tensor<T>({vocab_size, embed_dim})) {
+            MACRO_CLASS_NAME(MEmbed); 
         } 
 
         // Forward pass method
@@ -52,7 +53,14 @@ class MEmbed {
             memcpy(weight_.data().get(), data, 
                    weight_.size() * sizeof(T));
         }
-      
+
+        void printInfo(size_t indent = 0) const override {
+            std::cout << std::string(indent, ' ') 
+                      << "(" << name_ << ") :" <<
+                        " MEmbed(" << vocab_size_ 
+                      << ", " << embed_dim_ << ")" << std::endl;
+        }
+
     private:
         size_t vocab_size_;
         size_t embed_dim_;

@@ -1,18 +1,21 @@
 #ifndef __MNorm_HPP__
 #define __MNorm_HPP__
 #include "mtb.hpp"
+#include "Mmodel.hpp"
 
 namespace mnn {
 
 template <typename T>
-class MLayerNorm {
+class MLayerNorm : public MModel {
     public:
         MLayerNorm(size_t normalized_shape, double eps = 1e-5): 
             eps_(eps), normalized_shape_(normalized_shape),
             gamma_(mtb::ones<T>(
                 {normalized_shape})),
             beta_(mtb::zeros<T>(
-                {normalized_shape})) {}
+                {normalized_shape})) {
+            MACRO_CLASS_NAME(MLayerNorm);
+        }
 
         // Forward pass method
         mtb::Tensor<T> forward(const mtb::Tensor<T>& input) {
@@ -42,6 +45,14 @@ class MLayerNorm {
             }
             memcpy(beta_.data().get(), 
             data, size * sizeof(T));
+        }
+
+
+        void printInfo(size_t indent = 0) const override {
+            std::cout << std::string(indent, ' ') 
+                      << "(" << name_ << ") :" <<
+                        " MLayerNorm(" << normalized_shape_ << ", " 
+                      << eps_ << ")" << std::endl;
         }
 
     private:
