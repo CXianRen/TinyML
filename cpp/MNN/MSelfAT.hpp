@@ -35,10 +35,10 @@ public:
 							mtb::ones<uint8_t>(
 								{256, 256}), 1)) {
 			MACRO_CLASS_NAME(MSelfAT);
-			MACRO_REGISTER_M_MEMEBR(k_proj_);
-			MACRO_REGISTER_M_MEMEBR(v_proj_);
-			MACRO_REGISTER_M_MEMEBR(q_proj_);
-			MACRO_REGISTER_M_MEMEBR(out_proj_);
+			MACRO_REGISTER_M_MEMBER(k_proj_);
+			MACRO_REGISTER_M_MEMBER(v_proj_);
+			MACRO_REGISTER_M_MEMBER(q_proj_);
+			MACRO_REGISTER_M_MEMBER(out_proj_);
 		}
 	
 	mtb::Tensor<T> split_head(mtb::Tensor<T>& input) {

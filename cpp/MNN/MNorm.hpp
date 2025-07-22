@@ -51,10 +51,22 @@ class MLayerNorm : public MModel {
         void printInfo(size_t indent = 0, 
         std::ostream& os = std::cout) const override {
             os << std::string(indent, ' ') 
-                      << "(" << name_ << ") :" <<
-                        " MLayerNorm(" << normalized_shape_ << ", " 
+                      << "(" << getModelName() << ") : " 
+                      << getModelType()
+                      <<"(" << normalized_shape_ << ", " 
                       << eps_ << ")" << std::endl;
         }
+
+        void loadParameters(
+            const std::string& modelPath) override {
+            auto gamma = load_data<T>(
+                modelPath + "/weight/parameters.bin");
+            auto beta = load_data<T>(
+                modelPath + "/bias/parameters.bin");
+            fill_gamma(gamma.data(), gamma.size());
+            fill_beta(beta.data(), beta.size());
+        }
+
 
     private:
         double eps_;

@@ -57,9 +57,17 @@ class MEmbed: public MModel {
         void printInfo(size_t indent = 0, 
             std::ostream& os = std::cout) const override {
             os << std::string(indent, ' ') 
-                      << "(" << name_ << ") :" <<
-                        " MEmbed(" << vocab_size_ 
-                      << ", " << embed_dim_ << ")" << std::endl;
+                      << "(" << getModelName() << ") : "
+                      << getModelType() <<
+                      "(" << vocab_size_ 
+                      << ", " << embed_dim_ << ")" 
+                      << std::endl;
+        }
+
+        void loadParameters(const std::string& modelPath) override {
+            auto data = load_data<T>(
+                modelPath + "/weight/parameters.bin");
+            fill_weight(data.data(), data.size());
         }
 
     private:

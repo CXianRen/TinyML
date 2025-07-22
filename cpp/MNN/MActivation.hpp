@@ -33,8 +33,8 @@ class MGELUActivation: public MModel {
         void printInfo(size_t indent = 0, 
             std::ostream& os = std::cout) const override {
             os << std::string(indent, ' ') 
-                      << "(" << name_ << ") :" <<
-                        " MGELUActivation()" << std::endl;
+                      << "(" << getModelName() << ") :" <<
+                        getModelType() << std::endl;
         }
 };
 

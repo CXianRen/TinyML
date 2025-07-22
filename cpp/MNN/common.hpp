@@ -4,9 +4,11 @@
 #include <vector>
 #include <stdexcept>
 
+namespace mnn {
+
 template <typename FP_TYPE>
 std::vector<FP_TYPE> load_data(const std::string& filename, 
-    size_t size, bool quiet = false) {
+    size_t size = 0, bool quiet = true) {
     std::ifstream file(filename, std::ios::binary| std::ios::ate);
     if (!file) {
         std::cerr << "Error opening file: " << filename << std::endl;
@@ -50,4 +52,5 @@ std::vector<FP_TYPE> load_data(const std::string& filename,
     }
     
     return data; 
+}
 }

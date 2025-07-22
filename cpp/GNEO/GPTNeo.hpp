@@ -18,7 +18,7 @@ public:
       embed_dim_(embed_dim),
       attention_(embed_dim, 16, embed_dim/16) {
     MACRO_CLASS_NAME(GPTNeoAttention);
-    MACRO_REGISTER_M_MEMEBR(attention_);
+    MACRO_REGISTER_M_MEMBER(attention_);
   }
 
   Tensor<T> forward(const Tensor<T>& hidden_states,
@@ -56,9 +56,9 @@ public:
       c_proj_(inermediate_dim, embed_dim, true),
       act_() {
     MACRO_CLASS_NAME(GPTNeoMLP);
-    MACRO_REGISTER_M_MEMEBR(c_fc_);
-    MACRO_REGISTER_M_MEMEBR(c_proj_);
-    MACRO_REGISTER_M_MEMEBR(act_);
+    MACRO_REGISTER_M_MEMBER(c_fc_);
+    MACRO_REGISTER_M_MEMBER(c_proj_);
+    MACRO_REGISTER_M_MEMBER(act_);
   }
 
   Tensor<T> forward(const Tensor<T>& hidden_states) {
@@ -85,7 +85,7 @@ class GPTNeoBlock: public MModel {
 private:
   size_t layer_id_;
   MLayerNorm<T> ln_1_;
-  GPTNeoAttention<T> attention_;
+  GPTNeoAttention<T> attn_;
   MLayerNorm<T> ln_2_;
   GPTNeoMLP<T> mlp_;
 
@@ -93,15 +93,15 @@ public:
   GPTNeoBlock(size_t embed_dim, size_t layer_id = 0)
       : layer_id_(layer_id),
       ln_1_(embed_dim, 1e-5),
-      attention_(embed_dim, layer_id),
+      attn_(embed_dim, layer_id),
       ln_2_(embed_dim, 1e-5),
       mlp_(embed_dim, embed_dim * 4) {
 
     MACRO_CLASS_NAME(GPTNeoBlock);
-    MACRO_REGISTER_M_MEMEBR(ln_1_);
-    MACRO_REGISTER_M_MEMEBR(attention_);
-    MACRO_REGISTER_M_MEMEBR(ln_2_);
-    MACRO_REGISTER_M_MEMEBR(mlp_);
+    MACRO_REGISTER_M_MEMBER(ln_1_);
+    MACRO_REGISTER_M_MEMBER(attn_);
+    MACRO_REGISTER_M_MEMBER(ln_2_);
+    MACRO_REGISTER_M_MEMBER(mlp_);
   }
         
   Tensor<T> forward(const Tensor<T>& hidden_states,
@@ -109,7 +109,7 @@ public:
 										mtb::Tensor<T>* v_history=nullptr) {
     auto residual = hidden_states.copy();
     auto x = ln_1_.forward(hidden_states);
-    x = attention_.forward(x, k_history, v_history);
+    x = attn_.forward(x, k_history, v_history);
     x += residual; // Add residual connection
     
     residual = x.copy();
@@ -124,7 +124,7 @@ public:
                 T* q, size_t q_size,
                 T* o_w, size_t o_w_size,
                 T* o_b, size_t o_b_size) {
-    attention_.init_att(k, k_size, v, v_size, 
+    attn_.init_att(k, k_size, v, v_size, 
       q, q_size, o_w, o_w_size, o_b, o_b_size);
   }
 
@@ -159,7 +159,7 @@ private:
   size_t vocab_size_;
   MEmbed<T> wte_;
   MEmbed<T> wpe_;
-  std::vector<std::unique_ptr<GPTNeoBlock<T>>> layers_;
+  MList<GPTNeoBlock<T>> layers_;
   MLayerNorm<T> ln_f_;
   MLinear<T> lm_head_;
 public:
@@ -175,16 +175,16 @@ public:
         ln_f_(embed_dim, 1e-5),
         lm_head_(embed_dim, vocab_size, false) {
     for (size_t i = 0; i < 4; ++i) {
-      layers_.emplace_back(std::make_unique<GPTNeoBlock<T>>(embed_dim, i));
+      layers_.add(std::make_unique<GPTNeoBlock<T>>(embed_dim, i));
     }
 
     MACRO_CLASS_NAME(GPTNeoModel);
-    MACRO_REGISTER_M_MEMEBR(wte_);
-    MACRO_REGISTER_M_MEMEBR(wpe_);
+    MACRO_REGISTER_M_MEMBER(wte_);
+    MACRO_REGISTER_M_MEMBER(wpe_);
     // Register first layer as representative
-    MACRO_REGISTER_M_MEMEBR((*(layers_[0].get()))); 
-    MACRO_REGISTER_M_MEMEBR(ln_f_);
-    MACRO_REGISTER_M_MEMEBR(lm_head_);
+    MACRO_REGISTER_M_MEMBER(layers_);
+    MACRO_REGISTER_M_MEMBER(ln_f_);
+    MACRO_REGISTER_M_MEMBER(lm_head_);
     printInfo();
   }
 
@@ -215,117 +215,13 @@ public:
   }
 
   void load_model(const std::string& folder_path) {
-    // Load model weights from binary files
-    
-    auto wte_data = 
-    load_data<T>(folder_path + 
-      "/transformer/wte/weight/parameters.bin", 
-                 vocab_size_ * embed_dim_, true);
-    wte_.fill_weight(wte_data.data(), wte_data.size());
-
-    auto wpe_data = 
-    load_data<T>(folder_path + 
-      "/transformer/wpe/weight/parameters.bin",
-                  2048 * embed_dim_, true);
-    wpe_.fill_weight(wpe_data.data(), wpe_data.size());
+    wte_.loadParameters(folder_path + "/transformer/wte/");
+    wpe_.loadParameters(folder_path + "/transformer/wpe/");
 
     // initialize layers
-    for (size_t i = 0; i < num_layers_; ++i) {
-      auto k_data = 
-      load_data<T>(folder_path + 
-        "/transformer/h/" + std::to_string(i) + 
-        "/attn/attention/k_proj/weight/parameters.bin", 
-                   embed_dim_ * embed_dim_, true);
-      auto v_data = 
-      load_data<T>(folder_path + 
-        "/transformer/h/" + std::to_string(i) + 
-        "/attn/attention/v_proj/weight/parameters.bin", 
-                    embed_dim_ * embed_dim_, true);
-      auto q_data = 
-      load_data<T>(folder_path + 
-        "/transformer/h/" + std::to_string(i) + 
-        "/attn/attention/q_proj/weight/parameters.bin",
-                   embed_dim_ * embed_dim_, true);
-      auto o_w_data = 
-      load_data<T>(folder_path + 
-        "/transformer/h/" + std::to_string(i) + 
-        "/attn/attention/out_proj/weight/parameters.bin",
-                    embed_dim_ * embed_dim_, true);
-      auto o_b_data = 
-      load_data<T>(folder_path + 
-        "/transformer/h/" + std::to_string(i) + 
-        "/attn/attention/out_proj/bias/parameters.bin",
-                   embed_dim_, true);
-      
-      // initialize attention
-      layers_[i]->init_att(k_data.data(), k_data.size(),
-                          v_data.data(), v_data.size(),
-                          q_data.data(), q_data.size(),
-                          o_w_data.data(), o_w_data.size(),
-                          o_b_data.data(), o_b_data.size()); 
-      
-      // mlp weights
-      auto c_fc_w_data = 
-      load_data<T>(folder_path + "/transformer/h/" + std::to_string(i) + 
-                   "/mlp/c_fc/weight/parameters.bin",
-                   embed_dim_ * (embed_dim_ * 4), true);
-    
-      auto c_fc_b_data = 
-      load_data<T>(folder_path + "/transformer/h/" + std::to_string(i) + 
-                   "/mlp/c_fc/bias/parameters.bin",
-                   embed_dim_ * 4, true);
-      
-      auto c_proj_w_data = 
-      load_data<T>(folder_path + "/transformer/h/" + std::to_string(i) + 
-                   "/mlp/c_proj/weight/parameters.bin",\
-                    (embed_dim_ * 4) * embed_dim_, true);
-      auto c_proj_b_data = 
-      load_data<T>(folder_path + "/transformer/h/" + std::to_string(i) + 
-                   "/mlp/c_proj/bias/parameters.bin",
-                   embed_dim_, true);
-      // initialize mlp
-      layers_[i]->init_mlp(c_fc_w_data.data(), c_fc_w_data.size(),
-                          c_fc_b_data.data(), c_fc_b_data.size(),
-                          c_proj_w_data.data(), c_proj_w_data.size(),
-                          c_proj_b_data.data(), c_proj_b_data.size());
-      
-      
-      // layer norm weights
-      auto ln_1_w_data = 
-      load_data<T>(folder_path + "/transformer/h/" + std::to_string(i) + 
-                   "/ln_1/weight/parameters.bin", embed_dim_, true);
-      auto ln_1_b_data = 
-      load_data<T>(folder_path + "/transformer/h/" + std::to_string(i) + 
-                   "/ln_1/bias/parameters.bin", embed_dim_, true);
-
-      auto ln_2_w_data = 
-      load_data<T>(folder_path + "/transformer/h/" + std::to_string(i) + 
-                   "/ln_2/weight/parameters.bin", embed_dim_, true);
-      auto ln_2_b_data = 
-      load_data<T>(folder_path + "/transformer/h/" + std::to_string(i) + 
-                   "/ln_2/bias/parameters.bin", embed_dim_, true); 
-      // initialize layer norm
-      layers_[i]->init_ln_1(ln_1_w_data.data(), ln_1_w_data.size(),
-                           ln_1_b_data.data(), ln_1_b_data.size());
-      layers_[i]->init_ln_2(ln_2_w_data.data(), ln_2_w_data.size(),
-                           ln_2_b_data.data(), ln_2_b_data.size()); 
-    }
-    // final layer norm
-    auto ln_f_w_data = 
-    load_data<T>(folder_path + 
-      "/transformer/ln_f/weight/parameters.bin", embed_dim_, true);
-    auto ln_f_b_data = 
-    load_data<T>(folder_path + 
-      "/transformer/ln_f/bias/parameters.bin", embed_dim_, true);
-    ln_f_.fill_gamma(ln_f_w_data.data(), ln_f_w_data.size());
-    ln_f_.fill_beta(ln_f_b_data.data(), ln_f_b_data.size()); 
-
-    // lm head weights
-    auto lm_head_w_data = 
-    load_data<T>(folder_path + 
-      "/lm_head/weight/parameters.bin", 
-                 embed_dim_ * vocab_size_, true);
-    lm_head_.fill_weight(lm_head_w_data.data(), lm_head_w_data.size());
+    layers_.loadParameters(folder_path + "/transformer/h/");
+   
+    ln_f_.loadParameters(folder_path + "/transformer/ln_f/");
+    lm_head_.loadParameters(folder_path + "/lm_head/");
   }
-  
 };

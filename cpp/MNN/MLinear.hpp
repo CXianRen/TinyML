@@ -61,8 +61,9 @@ class MLinear: public MModel {
         void printInfo(size_t indent = 0, 
             std::ostream& os = std::cout) const override {
             os << std::string(indent, ' ') 
-                      << "(" << name_ << ") : " 
-                      << type_ << " (in_features: " 
+                      << "(" << getModelName() << ") : " 
+                      << getModelType() 
+                      << " (in_features: " 
                       << in_features_ 
                       << ", out_features: " 
                       << out_features_  
@@ -71,6 +72,19 @@ class MLinear: public MModel {
                       <<
                       ")" << std::endl;
         }
+
+        void loadParameters(
+            const std::string& modelPath) override {
+            auto data = load_data<T>(
+                modelPath + "/weight/parameters.bin");
+            fill_weight(data.data(), data.size());
+            if (has_bias_) {
+                auto bias_data = load_data<T>(
+                    modelPath + "/bias/parameters.bin");
+                fill_bias(bias_data.data(), bias_data.size());
+            }
+        }
+
 
     private:
         bool has_bias_ = true;
