@@ -70,6 +70,4 @@ python python/test_model_v2.py
 ```
 
 ## TODO
-- Optimize GEMM  
-- Use multiple cores  
 - Add configuration

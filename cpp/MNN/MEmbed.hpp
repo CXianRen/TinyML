@@ -54,8 +54,9 @@ class MEmbed: public MModel {
                    weight_.size() * sizeof(T));
         }
 
-        void printInfo(size_t indent = 0) const override {
-            std::cout << std::string(indent, ' ') 
+        void printInfo(size_t indent = 0, 
+            std::ostream& os = std::cout) const override {
+            os << std::string(indent, ' ') 
                       << "(" << name_ << ") :" <<
                         " MEmbed(" << vocab_size_ 
                       << ", " << embed_dim_ << ")" << std::endl;

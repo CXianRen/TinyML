@@ -1,7 +1,9 @@
 #pragma once
 #include <string>
+#include <iostream>
+#include <vector>
+
 #include "mtb.hpp"
-#include "vector"
 
 #define MACRO_REGISTER_M_MEMEBR(name) \
     child_.push_back(&name);\
@@ -32,24 +34,19 @@ public:
         return type_;
     }
 
-    // mtb::Tensor<T> operator()(const mtb::Tensor<T>& input) {
-    //     return forward(input);
-    // }
-
-    // virtual Tensor<T> forward(const Tensor<T>& input) = 0;
-
-    virtual void printInfo(size_t indent = 0) const {
+    virtual void printInfo(size_t indent = 0, 
+        std::ostream& os = std::cout ) const {
       // if not the top model, print the name and type
       if(indent !=0){
-        std::cout << std::string(indent, ' ') 
+        os << std::string(indent, ' ') 
                   << "(" << name_ << ") :";
       }
-      std::cout << " " << type_ << "(" << std::endl;
+        os << " " << type_ << "(" << std::endl;
 
       for(const auto& child : child_) {
-          child->printInfo(indent + 2);
+          child->printInfo(indent + 2, os);
       }
-      std::cout << std::string(indent, ' ') << ")" << std::endl;
+        os << std::string(indent, ' ') << ")" << std::endl;
     }
 };
 }
