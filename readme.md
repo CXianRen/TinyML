@@ -56,8 +56,7 @@ Unzip the downloaded file into the root directory. You should get the following 
 ```bash
 cd cpp
 mkdir build
-make
-./build/GNEO/test/test_gptneo_all_wh
+make run
 ```
 
 You should see output like the following:
@@ -67,6 +66,51 @@ You should see output like the following:
 ### ▶️ Run the Python Version
 ```bash
 python python/test_model_v2.py
+```
+
+## Profiler
+```sh
+  GPTNeoModel::forward: 15531 us
+    Embedding Layer: 10 us
+    Transformer Layers: 9109 us
+      GPTNeoBlock::forward: 2186 us
+        Attention Layer: 794 us
+      GPTNeoBlock::forward: 2349 us
+        Attention Layer: 993 us
+      GPTNeoBlock::forward: 2330 us
+        Attention Layer: 936 us
+      GPTNeoBlock::forward: 2233 us
+        Attention Layer: 877 us
+    LN&LM: 6411 us
+```
+
+## Structure printer
+```sh
+ GPTNeoModel(
+  (wte) : MEmbed(50257, 768)
+  (wpe) : MEmbed(2048, 768)
+  (layers) : MList size:4 (
+    (0) : GPTNeoBlock(
+      (ln_1) : MLayerNorm(768, 1e-05)
+      (attn) : GPTNeoAttention(
+        (attention) : MSelfAT(
+          (k_proj) : MLinear (in_features: 768, out_features: 768, has_bias: false)
+          (v_proj) : MLinear (in_features: 768, out_features: 768, has_bias: false)
+          (q_proj) : MLinear (in_features: 768, out_features: 768, has_bias: false)
+          (out_proj) : MLinear (in_features: 768, out_features: 768, has_bias: true)
+        )
+      )
+      (ln_2) : MLayerNorm(768, 1e-05)
+      (mlp) : GPTNeoMLP(
+        (c_fc) : MLinear (in_features: 768, out_features: 3072, has_bias: true)
+        (c_proj) : MLinear (in_features: 3072, out_features: 768, has_bias: true)
+        (act) :MGELUActivation
+      )
+    )
+  )
+  (ln_f) : MLayerNorm(768, 1e-05)
+  (lm_head) : MLinear (in_features: 768, out_features: 50257, has_bias: false)
+)
 ```
 
 ## TODO

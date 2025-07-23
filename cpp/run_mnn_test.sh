@@ -11,6 +11,9 @@ python MNN/test/test_embed.py
 python MNN/test/test_selfAT.py
 ./build/MNN/test/test_selfAT
 
+python MNN/test/test_selfAT_wh.py
+./build/MNN/test/test_selfAT_wh
+
 python MNN/test/test_gelu.py
 ./build/MNN/test/test_gelu
 

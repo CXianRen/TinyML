@@ -1,5 +1,6 @@
 #pragma once
 #include "mnn.hpp"
+#include "profiler.hpp"
 #include <memory>
 
 using namespace mtb;
@@ -25,17 +26,6 @@ public:
                     mtb::Tensor<T>* k_history = nullptr, 
                     mtb::Tensor<T>* v_history = nullptr) {
     return attention_.forward(hidden_states, k_history, v_history);
-  }
-
-  void init_att(T* k, size_t k_size,
-                T* v, size_t v_size,
-                T* q, size_t q_size,
-                T* o_w, size_t o_w_size,
-                T* o_b, size_t o_b_size) {
-    attention_.fill_k(k, k_size);
-    attention_.fill_v(v, v_size);
-    attention_.fill_q(q, q_size);
-    attention_.fill_out(o_w, o_b, o_w_size, o_b_size);          
   }
 };
 
@@ -67,16 +57,6 @@ public:
     x = c_proj_.forward(x);
     return x;
   }
-
-  void init_mlp(T* c_fc_w, size_t c_fc_w_size,
-                T* c_fc_b, size_t c_fc_b_size,
-                T* c_proj_w, size_t c_proj_w_size,
-                T* c_proj_b, size_t c_proj_b_size) {
-    c_fc_.fill_weight(c_fc_w, c_fc_w_size);
-    c_fc_.fill_bias(c_fc_b, c_fc_b_size);
-    c_proj_.fill_weight(c_proj_w, c_proj_w_size);
-    c_proj_.fill_bias(c_proj_b, c_proj_b_size);
-  }
 };
 
 
@@ -107,47 +87,21 @@ public:
   Tensor<T> forward(const Tensor<T>& hidden_states,
   									mtb::Tensor<T>* k_history=nullptr, 
 										mtb::Tensor<T>* v_history=nullptr) {
+    MSTART("GPTNeoBlock::forward");
+
     auto residual = hidden_states.copy();
     auto x = ln_1_.forward(hidden_states);
+    MSTART("Attention Layer");
     x = attn_.forward(x, k_history, v_history);
+    MSTOP(); // End Attention Layer profiling
     x += residual; // Add residual connection
     
     residual = x.copy();
     x = ln_2_.forward(x);
     x = mlp_.forward(x);
     x += residual; // Add residual connection
+    MSTOP(); // End GPTNeoBlock::forward profiling
     return x;
-  }
-  
-  void init_att(T* k, size_t k_size,
-                T* v, size_t v_size,
-                T* q, size_t q_size,
-                T* o_w, size_t o_w_size,
-                T* o_b, size_t o_b_size) {
-    attn_.init_att(k, k_size, v, v_size, 
-      q, q_size, o_w, o_w_size, o_b, o_b_size);
-  }
-
-  void init_mlp(T* c_fc_w, size_t c_fc_w_size,
-                T* c_fc_b, size_t c_fc_b_size,
-                T* c_proj_w, size_t c_proj_w_size,
-                T* c_proj_b, size_t c_proj_b_size) {
-    mlp_.init_mlp(c_fc_w, c_fc_w_size, 
-                  c_fc_b, c_fc_b_size,
-                  c_proj_w, c_proj_w_size,
-                  c_proj_b, c_proj_b_size);
-  }
-
-  void init_ln_1(T* ln_1_w, size_t ln_1_w_size,
-                 T* ln_1_b, size_t ln_1_b_size) {
-    ln_1_.fill_gamma(ln_1_w, ln_1_w_size);
-    ln_1_.fill_beta(ln_1_b, ln_1_b_size);
-  }
-
-  void init_ln_2(T* ln_2_w, size_t ln_2_w_size,
-                 T* ln_2_b, size_t ln_2_b_size) {
-    ln_2_.fill_gamma(ln_2_w, ln_2_w_size);
-    ln_2_.fill_beta(ln_2_b, ln_2_b_size);
   }
 };
 
@@ -192,9 +146,13 @@ public:
                     const Tensor<int>& position_ids,
                     std::vector<Tensor<T>>* k_history = nullptr,
                     std::vector<Tensor<T>>* v_history = nullptr) {
+    MSTART("GPTNeoModel::forward");
+    MSTART("Embedding Layer");
     auto hidden_states = wte_.forward(input_ids);
     auto position_embeds = wpe_.forward(position_ids);
+    MSTOP(); // End Embedding Layer profiling
 
+    MSTART("Transformer Layers");
     hidden_states += position_embeds; // Add position embeddings
     for (size_t i = 0; i < num_layers_; ++i) {
       if (k_history != nullptr && v_history != nullptr) 
@@ -208,9 +166,13 @@ public:
         hidden_states = layers_[i]->forward(hidden_states);
       }
     }
-    
+    MSTOP(); // End Transformer Layers profiling
+    MSTART("LN&LM");
     hidden_states = ln_f_.forward(hidden_states);
     auto logits = lm_head_.forward(hidden_states);
+    MSTOP(); // End LN&LM profiling
+
+    MSTOP(); // End GPTNeoModel::forward profiling
     return logits; // Return logits for next token prediction
   }
 

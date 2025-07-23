@@ -1,0 +1,313 @@
+test_generation: -1753307609542483 us
+  GPTNeoModel::forward: 69705 us
+    Embedding Layer: 34 us
+    Transformer Layers: 37042 us
+      GPTNeoBlock::forward: 9734 us
+        Attention Layer: 2694 us
+      GPTNeoBlock::forward: 9237 us
+        Attention Layer: 2360 us
+      GPTNeoBlock::forward: 8983 us
+        Attention Layer: 2291 us
+      GPTNeoBlock::forward: 9050 us
+        Attention Layer: 2282 us
+    LN&LM: 32627 us
+  GPTNeoModel::forward: 16064 us
+    Embedding Layer: 10 us
+    Transformer Layers: 9206 us
+      GPTNeoBlock::forward: 2343 us
+        Attention Layer: 897 us
+      GPTNeoBlock::forward: 2296 us
+        Attention Layer: 897 us
+      GPTNeoBlock::forward: 2233 us
+        Attention Layer: 852 us
+      GPTNeoBlock::forward: 2323 us
+        Attention Layer: 952 us
+    LN&LM: 6846 us
+  GPTNeoModel::forward: 16423 us
+    Embedding Layer: 10 us
+    Transformer Layers: 9560 us
+      GPTNeoBlock::forward: 2482 us
+        Attention Layer: 1034 us
+      GPTNeoBlock::forward: 2242 us
+        Attention Layer: 785 us
+      GPTNeoBlock::forward: 2407 us
+        Attention Layer: 955 us
+      GPTNeoBlock::forward: 2419 us
+        Attention Layer: 991 us
+    LN&LM: 6850 us
+  GPTNeoModel::forward: 15525 us
+    Embedding Layer: 10 us
+    Transformer Layers: 9120 us
+      GPTNeoBlock::forward: 2333 us
+        Attention Layer: 878 us
+      GPTNeoBlock::forward: 2320 us
+        Attention Layer: 911 us
+      GPTNeoBlock::forward: 2317 us
+        Attention Layer: 891 us
+      GPTNeoBlock::forward: 2139 us
+        Attention Layer: 777 us
+    LN&LM: 6392 us
+  GPTNeoModel::forward: 15300 us
+    Embedding Layer: 10 us
+    Transformer Layers: 8741 us
+      GPTNeoBlock::forward: 2207 us
+        Attention Layer: 834 us
+      GPTNeoBlock::forward: 2129 us
+        Attention Layer: 744 us
+      GPTNeoBlock::forward: 2126 us
+        Attention Layer: 762 us
+      GPTNeoBlock::forward: 2269 us
+        Attention Layer: 808 us
+    LN&LM: 6547 us
+  GPTNeoModel::forward: 15238 us
+    Embedding Layer: 9 us
+    Transformer Layers: 8822 us
+      GPTNeoBlock::forward: 2169 us
+        Attention Layer: 773 us
+      GPTNeoBlock::forward: 2203 us
+        Attention Layer: 790 us
+      GPTNeoBlock::forward: 2318 us
+        Attention Layer: 942 us
+      GPTNeoBlock::forward: 2122 us
+        Attention Layer: 746 us
+    LN&LM: 6404 us
+  GPTNeoModel::forward: 15531 us
+    Embedding Layer: 10 us
+    Transformer Layers: 9109 us
+      GPTNeoBlock::forward: 2186 us
+        Attention Layer: 794 us
+      GPTNeoBlock::forward: 2349 us
+        Attention Layer: 993 us
+      GPTNeoBlock::forward: 2330 us
+        Attention Layer: 936 us
+      GPTNeoBlock::forward: 2233 us
+        Attention Layer: 877 us
+    LN&LM: 6411 us
+  GPTNeoModel::forward: 15680 us
+    Embedding Layer: 9 us
+    Transformer Layers: 9303 us
+      GPTNeoBlock::forward: 2435 us
+        Attention Layer: 1066 us
+      GPTNeoBlock::forward: 2567 us
+        Attention Layer: 1179 us
+      GPTNeoBlock::forward: 2172 us
+        Attention Layer: 779 us
+      GPTNeoBlock::forward: 2119 us
+        Attention Layer: 763 us
+    LN&LM: 6365 us
+  GPTNeoModel::forward: 15921 us
+    Embedding Layer: 10 us
+    Transformer Layers: 9548 us
+      GPTNeoBlock::forward: 2448 us
+        Attention Layer: 1075 us
+      GPTNeoBlock::forward: 2433 us
+        Attention Layer: 1058 us
+      GPTNeoBlock::forward: 2267 us
+        Attention Layer: 890 us
+      GPTNeoBlock::forward: 2390 us
+        Attention Layer: 1017 us
+    LN&LM: 6361 us
+  GPTNeoModel::forward: 16546 us
+    Embedding Layer: 9 us
+    Transformer Layers: 9872 us
+      GPTNeoBlock::forward: 2542 us
+        Attention Layer: 1109 us
+      GPTNeoBlock::forward: 2547 us
+        Attention Layer: 1127 us
+      GPTNeoBlock::forward: 2432 us
+        Attention Layer: 1018 us
+      GPTNeoBlock::forward: 2339 us
+        Attention Layer: 949 us
+    LN&LM: 6663 us
+  GPTNeoModel::forward: 16315 us
+    Embedding Layer: 13 us
+    Transformer Layers: 9808 us
+      GPTNeoBlock::forward: 2430 us
+        Attention Layer: 948 us
+      GPTNeoBlock::forward: 2381 us
+        Attention Layer: 967 us
+      GPTNeoBlock::forward: 2628 us
+        Attention Layer: 1182 us
+      GPTNeoBlock::forward: 2357 us
+        Attention Layer: 971 us
+    LN&LM: 6492 us
+  GPTNeoModel::forward: 15752 us
+    Embedding Layer: 9 us
+    Transformer Layers: 9207 us
+      GPTNeoBlock::forward: 2196 us
+        Attention Layer: 814 us
+      GPTNeoBlock::forward: 2160 us
+        Attention Layer: 795 us
+      GPTNeoBlock::forward: 2549 us
+        Attention Layer: 1148 us
+      GPTNeoBlock::forward: 2291 us
+        Attention Layer: 937 us
+    LN&LM: 6534 us
+  GPTNeoModel::forward: 16232 us
+    Embedding Layer: 9 us
+    Transformer Layers: 9871 us
+      GPTNeoBlock::forward: 2556 us
+        Attention Layer: 1167 us
+      GPTNeoBlock::forward: 2501 us
+        Attention Layer: 1127 us
+      GPTNeoBlock::forward: 2419 us
+        Attention Layer: 1042 us
+      GPTNeoBlock::forward: 2385 us
+        Attention Layer: 984 us
+    LN&LM: 6350 us
+  GPTNeoModel::forward: 15489 us
+    Embedding Layer: 8 us
+    Transformer Layers: 9071 us
+      GPTNeoBlock::forward: 2238 us
+        Attention Layer: 826 us
+      GPTNeoBlock::forward: 2211 us
+        Attention Layer: 808 us
+      GPTNeoBlock::forward: 2426 us
+        Attention Layer: 1024 us
+      GPTNeoBlock::forward: 2187 us
+        Attention Layer: 821 us
+    LN&LM: 6408 us
+  GPTNeoModel::forward: 16585 us
+    Embedding Layer: 9 us
+    Transformer Layers: 9744 us
+      GPTNeoBlock::forward: 2431 us
+        Attention Layer: 1065 us
+      GPTNeoBlock::forward: 2534 us
+        Attention Layer: 1024 us
+      GPTNeoBlock::forward: 2257 us
+        Attention Layer: 850 us
+      GPTNeoBlock::forward: 2512 us
+        Attention Layer: 1070 us
+    LN&LM: 6830 us
+  GPTNeoModel::forward: 16520 us
+    Embedding Layer: 11 us
+    Transformer Layers: 9768 us
+      GPTNeoBlock::forward: 2485 us
+        Attention Layer: 1048 us
+      GPTNeoBlock::forward: 2380 us
+        Attention Layer: 920 us
+      GPTNeoBlock::forward: 2380 us
+        Attention Layer: 923 us
+      GPTNeoBlock::forward: 2512 us
+        Attention Layer: 1065 us
+    LN&LM: 6739 us
+  GPTNeoModel::forward: 15544 us
+    Embedding Layer: 9 us
+    Transformer Layers: 9069 us
+      GPTNeoBlock::forward: 2321 us
+        Attention Layer: 872 us
+      GPTNeoBlock::forward: 2222 us
+        Attention Layer: 847 us
+      GPTNeoBlock::forward: 2256 us
+        Attention Layer: 877 us
+      GPTNeoBlock::forward: 2259 us
+        Attention Layer: 877 us
+    LN&LM: 6464 us
+  GPTNeoModel::forward: 15765 us
+    Embedding Layer: 10 us
+    Transformer Layers: 9246 us
+      GPTNeoBlock::forward: 2407 us
+        Attention Layer: 979 us
+      GPTNeoBlock::forward: 2216 us
+        Attention Layer: 849 us
+      GPTNeoBlock::forward: 2355 us
+        Attention Layer: 974 us
+      GPTNeoBlock::forward: 2258 us
+        Attention Layer: 864 us
+    LN&LM: 6507 us
+  GPTNeoModel::forward: 15848 us
+    Embedding Layer: 8 us
+    Transformer Layers: 9476 us
+      GPTNeoBlock::forward: 2306 us
+        Attention Layer: 893 us
+      GPTNeoBlock::forward: 2243 us
+        Attention Layer: 855 us
+      GPTNeoBlock::forward: 2394 us
+        Attention Layer: 1028 us
+      GPTNeoBlock::forward: 2524 us
+        Attention Layer: 1144 us
+    LN&LM: 6362 us
+  GPTNeoModel::forward: 15434 us
+    Embedding Layer: 8 us
+    Transformer Layers: 9038 us
+      GPTNeoBlock::forward: 2263 us
+        Attention Layer: 866 us
+      GPTNeoBlock::forward: 2247 us
+        Attention Layer: 858 us
+      GPTNeoBlock::forward: 2282 us
+        Attention Layer: 890 us
+      GPTNeoBlock::forward: 2236 us
+        Attention Layer: 864 us
+    LN&LM: 6386 us
+  GPTNeoModel::forward: 15970 us
+    Embedding Layer: 8 us
+    Transformer Layers: 9328 us
+      GPTNeoBlock::forward: 2267 us
+        Attention Layer: 882 us
+      GPTNeoBlock::forward: 2353 us
+        Attention Layer: 910 us
+      GPTNeoBlock::forward: 2398 us
+        Attention Layer: 983 us
+      GPTNeoBlock::forward: 2299 us
+        Attention Layer: 913 us
+    LN&LM: 6632 us
+  GPTNeoModel::forward: 16115 us
+    Embedding Layer: 11 us
+    Transformer Layers: 9507 us
+      GPTNeoBlock::forward: 2446 us
+        Attention Layer: 931 us
+      GPTNeoBlock::forward: 2353 us
+        Attention Layer: 926 us
+      GPTNeoBlock::forward: 2351 us
+        Attention Layer: 920 us
+      GPTNeoBlock::forward: 2344 us
+        Attention Layer: 920 us
+    LN&LM: 6595 us
+  GPTNeoModel::forward: 15639 us
+    Embedding Layer: 9 us
+    Transformer Layers: 9194 us
+      GPTNeoBlock::forward: 2341 us
+        Attention Layer: 917 us
+      GPTNeoBlock::forward: 2250 us
+        Attention Layer: 876 us
+      GPTNeoBlock::forward: 2324 us
+        Attention Layer: 944 us
+      GPTNeoBlock::forward: 2268 us
+        Attention Layer: 890 us
+    LN&LM: 6434 us
+  GPTNeoModel::forward: 15590 us
+    Embedding Layer: 9 us
+    Transformer Layers: 9194 us
+      GPTNeoBlock::forward: 2310 us
+        Attention Layer: 901 us
+      GPTNeoBlock::forward: 2288 us
+        Attention Layer: 916 us
+      GPTNeoBlock::forward: 2259 us
+        Attention Layer: 892 us
+      GPTNeoBlock::forward: 2327 us
+        Attention Layer: 928 us
+    LN&LM: 6385 us
+  GPTNeoModel::forward: 15649 us
+    Embedding Layer: 9 us
+    Transformer Layers: 9259 us
+      GPTNeoBlock::forward: 2275 us
+        Attention Layer: 889 us
+      GPTNeoBlock::forward: 2331 us
+        Attention Layer: 907 us
+      GPTNeoBlock::forward: 2295 us
+        Attention Layer: 934 us
+      GPTNeoBlock::forward: 2348 us
+        Attention Layer: 960 us
+    LN&LM: 6379 us
+  GPTNeoModel::forward: 15637 us
+    Embedding Layer: 8 us
+    Transformer Layers: 9243 us
+      GPTNeoBlock::forward: 2286 us
+        Attention Layer: 918 us
+      GPTNeoBlock::forward: 2336 us
+        Attention Layer: 914 us
+      GPTNeoBlock::forward: 2336 us
+        Attention Layer: 954 us
+      GPTNeoBlock::forward: 2276 us
+        Attention Layer: 914 us
+    LN&LM: 6384 us
